@@ -1,0 +1,20 @@
+{
+  "name": "cicd-owl-be",
+  "version": "1.0.0",
+  "description": "cicd-owl-be",
+  "main": "app.ts",
+  "scripts": {
+    "start": "ts-node -T app.ts",
+    "dev": "nodemon -T app.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^4.13.0",
+    "mongoose": "^6.9.1",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  }
+}
