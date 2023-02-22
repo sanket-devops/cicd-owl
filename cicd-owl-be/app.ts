@@ -1,8 +1,12 @@
 import { Iuser } from "./interfaces/Iuser";
 import Fastify from "fastify";
+import cors from '@fastify/cors'
 import mongoose from "mongoose";
 
 const fastify = Fastify();
+fastify.register(cors, { 
+  // put your options here
+})
 const hostname = "0.0.0.0";
 const port = 8888;
 const app = fastify;
