@@ -11,6 +11,7 @@ const hostname = "0.0.0.0";
 const port = 8888;
 const app = fastify;
 const userModel = require("./models/user.model");
+const cicdModel = require("./models/cicd.model");
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
 mongoose.set("strictQuery", true);
