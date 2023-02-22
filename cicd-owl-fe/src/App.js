@@ -1,9 +1,15 @@
+import React, { useEffect } from 'react';
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
 import Login from './components/login/login'
 import Dashboard from './components/dashboard/dashboard'
- 
+
 function App() {
+  const navigate = useNavigate();
+
+
+
+
   return (
     <Routes>
       <Route path='/' element={<Login />} />
@@ -13,7 +19,7 @@ function App() {
     </Routes>
   );
 }
- 
+
 export default App;
 
 

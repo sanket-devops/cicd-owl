@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './dashboard.css'
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { InputText } from "primereact/inputtext";
@@ -8,8 +8,16 @@ import { Toast } from 'primereact/toast';
 function Dashboard() {
     const navigate = useNavigate();
     let toast = useRef(null);
+    let isUserLoggedIn = localStorage.getItem('isLoggedIn');
+
+    useEffect(() => {
+        if (isUserLoggedIn === "false") {
+            navigate("/login");
+        }
+      });
 
     let LogoutClick = async () => {
+        localStorage.setItem('isLoggedIn', false);
         navigate("/login");
     }
 

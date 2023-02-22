@@ -1,4 +1,4 @@
-import React, { useState, useRef, setState } from 'react';
+import React, { useState, useRef, setState, useEffect } from 'react';
 import './login.css'
 import { InputText } from "primereact/inputtext";
 import { Button } from 'primereact/button';
@@ -13,6 +13,13 @@ function Login() {
     let [pass, setPass] = useState('');
     let [isLoggedIn, setIsLoggedIn] = useState(false);
     let status = '';
+
+    useEffect(() => {
+        let isUserLoggedIn = localStorage.getItem('isLoggedIn');
+        if (isUserLoggedIn === "true") {
+            navigate("/dashboard");
+        }
+    });
 
     let Greeting = () => {
         if (isLoggedIn) {
@@ -48,11 +55,13 @@ function Login() {
             let resData = await res.json();
             if (res.status === 200) {
                 setIsLoggedIn(true);
+                localStorage.setItem('isLoggedIn', true)
                 status = await resData.userName;
                 toast.current.show({ severity: 'success', summary: 'Success', detail: status });
                 navigate("/dashboard");
             } else {
                 setIsLoggedIn(false);
+                localStorage.setItem('isLoggedIn', false)
                 status = await resData.error;
                 toast.current.show({ severity: 'error', summary: 'Error', detail: status });
             }
@@ -60,9 +69,7 @@ function Login() {
             status = 'Please Enter Username and Password';
             toast.current.show({ severity: 'error', summary: 'Error', detail: status });
         }
-
     }
-
     return (
         <>
             <>{Greeting()}</>
