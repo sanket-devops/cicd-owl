@@ -3,13 +3,15 @@ import './login.css'
 import { InputText } from "primereact/inputtext";
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
+// import Dashboard from './components/login/login'
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 
 function Login() {
+    const navigate = useNavigate();
     let toast = useRef(null);
     let [user, setUser] = useState('');
     let [pass, setPass] = useState('');
     let [isLoggedIn, setIsLoggedIn] = useState(false);
-    let [checkUserAccess, setCheckUserAccess] = useState('');
     let status = '';
 
     let Greeting = () => {
@@ -46,12 +48,11 @@ function Login() {
             let resData = await res.json();
             if (res.status === 200) {
                 setIsLoggedIn(true);
-                setCheckUserAccess(await resData.userName);
                 status = await resData.userName;
                 toast.current.show({ severity: 'success', summary: 'Success', detail: status });
+                navigate("/dashboard");
             } else {
                 setIsLoggedIn(false);
-                setCheckUserAccess(resData.error);
                 status = await resData.error;
                 toast.current.show({ severity: 'error', summary: 'Error', detail: status });
             }
@@ -87,71 +88,4 @@ function Login() {
     )
 }
 
-
-
-
-
-
-
-
-
-// class Login extends React.Component {
-//     constructor(props) {
-//         super(props);
-//         this.state = { isLoggedIn: false, user: '', pass: '' };
-
-//         this.userChange = this.userChange.bind(this);
-//         this.passChange = this.passChange.bind(this);
-//         this.LoginClick = this.LoginClick.bind(this);
-
-//     }
-
-//     Greeting = () => {
-//         if (this.state.isLoggedIn) {
-//             return <h1>Welcome {this.state.user}</h1>;
-//         } else {
-//             return <h1>Please login...</h1>;
-//         }
-//     }
-//     userChange(event) {
-//         this.setState({ user: event.target.value });
-//         // console.log(this.state)
-//     }
-
-//     passChange(event) {
-//         this.setState({ pass: event.target.value });
-//         // console.log(this.state)
-//     }
-
-//     LoginClick(event) {
-//         this.setState({ isLoggedIn: true });
-//         event.preventDefault();
-//         console.log(this.state)
-//     }
-
-//     render() {
-//         return (
-//             <>
-//                 <>{this.Greeting()}</>
-//                 <div className="card flex justify-content-center">
-//                     <div className="flex flex-column gap-2">
-//                         <label htmlFor="username">Username</label>
-//                         <InputText id="username" value={this.state.user} onChange={this.userChange} aria-describedby="username-help" />
-//                         <small id="username-help">
-//                             Enter your username.
-//                         </small>
-//                         <br />
-//                         <label htmlFor="password">Password</label>
-//                         <InputText id="password" value={this.state.pass} onChange={this.passChange} aria-describedby="password-help" />
-//                         <small id="password-help">
-//                             Enter your password.
-//                         </small>
-//                         <br />
-//                         <Button label="Submit" type="submit" onClick={this.LoginClick} icon="pi pi-check" />
-//                     </div>
-//                 </div>
-//             </>
-//         )
-//     }
-// }
 export default Login;
