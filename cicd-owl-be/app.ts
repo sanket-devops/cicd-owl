@@ -102,11 +102,11 @@ app.post("/users/login", async (req: any, res) => {
         res.send(userData);
       } else {
         res.status(401);
-        res.send({"userName": "Check Your Username and Password"});
+        res.send({"error": "Incorrect password check your password..."});
       }
     } else {
       res.status(401);
-      res.send({"userName": "User Not Found..."});
+      res.send({"error": "User Not Found..."});
     }
   } catch (e) {
     console.log(e);

@@ -1,12 +1,16 @@
-import React, { useState, setState } from 'react';
+import React, { useState, useRef, setState } from 'react';
 import './login.css'
 import { InputText } from "primereact/inputtext";
 import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
 
 function Login() {
+    let toast = useRef(null);
     let [user, setUser] = useState('');
     let [pass, setPass] = useState('');
-    let [isLoggedIn, setsIsLoggedIn] = useState(false);
+    let [isLoggedIn, setIsLoggedIn] = useState(false);
+    let [checkUserAccess, setCheckUserAccess] = useState('');
+    let status = '';
 
     let Greeting = () => {
         if (isLoggedIn) {
@@ -24,29 +28,44 @@ function Login() {
     }
 
     let LoginClick = async () => {
-        setsIsLoggedIn(true);
-        fetch('http://192.168.10.108:8888/users/login', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "data": {
-                    "userName": user,
-                    "userPass": pass
-                }
+        if (user) {
+            let res = await fetch('http://192.168.10.108:8888/users/login', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "data": {
+                        "userName": user,
+                        "userPass": pass
+                    }
+                })
             })
-        })
-        // let res = await fetch('http://192.168.10.108:8888/users');
-        // let data = await res.json();
-        // console.log(data.data)
-        // console.log(user, pass, isLoggedIn)
+            // let res = await fetch('http://192.168.10.108:8888/users');
+            let resData = await res.json();
+            if (res.status === 200) {
+                setIsLoggedIn(true);
+                setCheckUserAccess(await resData.userName);
+                status = await resData.userName;
+                toast.current.show({ severity: 'success', summary: 'Success', detail: status });
+            } else {
+                setIsLoggedIn(false);
+                setCheckUserAccess(resData.error);
+                status = await resData.error;
+                toast.current.show({ severity: 'error', summary: 'Error', detail: status });
+            }
+        } else {
+            status = 'Please Enter Username and Password';
+            toast.current.show({ severity: 'error', summary: 'Error', detail: status });
+        }
+
     }
 
     return (
         <>
             <>{Greeting()}</>
+            <Toast ref={toast} />
             <div className="card flex justify-content-center">
                 <div className="flex flex-column gap-2">
                     <label htmlFor="username">Username</label>
