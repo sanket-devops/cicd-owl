@@ -89,6 +89,32 @@ app.post("/users/user-delete", async (req: any, res) => {
   }
 });
 
+//POST Login User
+app.post("/users/login", async (req: any, res) => {
+  try {
+    // let tempData = JSON.parse(getDecryptedData(req.body.data));
+    // console.log(req.body.data)
+    let postData = JSON.parse(JSON.stringify(req.body.data));
+    let userData = await userModel.userData.findOne({ userName: postData.userName });
+    if (await userData) {
+      // console.log(await userData)
+      if ((postData.userName === userData.userName) && (postData.userPass === userData.userPass)) {
+        res.send(userData);
+      } else {
+        res.status(401);
+        res.send({"userName": "Check Your Username and Password"});
+      }
+    } else {
+      res.status(401);
+      res.send({"userName": "User Not Found..."});
+    }
+  } catch (e) {
+    console.log(e);
+    res.status(500);
+    res.send({ message: e.message });
+  }
+});
+
 async function ssh(host: string, user: string, pass: string, command: any) {
   let output: any = [];
 

@@ -25,9 +25,22 @@ function Login() {
 
     let LoginClick = async () => {
         setsIsLoggedIn(true);
-        let res = await fetch('http://192.168.10.108:8888/users');
-        let data = await res.json();
-        console.log(data.data)
+        fetch('http://192.168.10.108:8888/users/login', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "data": {
+                    "userName": user,
+                    "userPass": pass
+                }
+            })
+        })
+        // let res = await fetch('http://192.168.10.108:8888/users');
+        // let data = await res.json();
+        // console.log(data.data)
         // console.log(user, pass, isLoggedIn)
     }
 

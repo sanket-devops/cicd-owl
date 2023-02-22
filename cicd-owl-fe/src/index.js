@@ -6,7 +6,6 @@ import 'primeicons/primeicons.css';                                 // icons
 import 'primeflex/primeflex.css';                                   // css utility
 import './index.css';
 // import App from './App';
-import LoginControl from './Login';
 import Login from './components/login/login'
 import reportWebVitals from './reportWebVitals';
 
