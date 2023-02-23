@@ -3,11 +3,11 @@ import { ICore } from "./Icore";
 export interface Icicd extends ICore {
   itemName: string,
   status: string,
-  cicdStage: IcicdStage[],
+  cicdStages: IcicdStages[],
   cicdStagesOutput: IcicdStagesOutput[]
 }
 
-export interface IcicdStage {
+export interface IcicdStages {
   stageName: string;
   remoteHost: string;
   command: string;

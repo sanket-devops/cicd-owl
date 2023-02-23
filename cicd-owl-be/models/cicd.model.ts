@@ -5,8 +5,8 @@ const Schema = mongoose.Schema;
 const CicdSchema = new Schema({
     itemName: String,
     status: String,
-    cicdStage: [{stageName: String, remoteHost: String, command: String}],
-    cicdStageOutput: [{buildNumber: Number, startTime: String, endTime: String, status: String, cicdStage: [{stageName: String, startTime: String, endTime: String, status: String, logs:[]}]}]
+    cicdStages: [{stageName: String, remoteHost: String, command: String}],
+    cicdStagesOutput: [{buildNumber: Number, startTime: String, endTime: String, status: String, cicdStage: [{stageName: String, startTime: String, endTime: String, status: String, logs:[]}]}]
 }, {
     // http://mongoosejs.com/docs/guide.html#timestamps
     timestamps: true

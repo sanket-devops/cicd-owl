@@ -31,14 +31,76 @@ app.get("/", (req, res) => {
   res.send(`CICD-OWL Is Running...`);
 });
 
+
+/////////////////////////////////////////////////////////////////////
+
+//GET Cicds Items
+app.get("/cicds", async (req, res) => {
+  try {
+    // let hosts = await owlModel.serviceHost.find({}).sort({_id:-1});
+    // let hosts = await owlModel.serviceHost.find({}).select('ipAddress hostName port hostMetrics.DiskFree hostMetrics.MemFree hostMetrics.CpuUsage linkTo userName userPass groupName clusterName envName vmName note status hostCheck metricsCheck createdAt updatedAt').sort({_id:-1});
+    let cicds = await cicdModel.cicdData.find({});
+    // res.send({data: getEncryptedData(hosts)});
+    res.send({ data: cicds });
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+//POST Cicd Item
+app.post("/cicds/cicd-save", async (req: any, res) => {
+  try {
+    // let tempData = JSON.parse(getDecryptedData(req.body.data));
+    // console.log(req.body.data)
+    let tempData = JSON.parse(JSON.stringify(req.body.data));
+    let saved = await cicdModel.cicdData.create(tempData);
+    res.send(saved);
+  } catch (e) {
+    console.log(e);
+    res.status(500);
+    res.send({ message: e.message });
+  }
+});
+
+//UPDATE Cicd Item
+app.put("/cicds/update", async (req: any, res) => {
+  try {
+    // let tempData = JSON.parse(getDecryptedData(req.body.data));
+    let tempData = JSON.parse(JSON.stringify(req.body.data));
+    let id = JSON.parse(JSON.stringify(req.body.id));
+    let post = await cicdModel.cicdData.findOneAndUpdate(
+      { _id: id },
+      tempData,
+      { new: true, runValidator: true }
+    );
+    res.send(post);
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+//DELETE Cicd Item
+app.post("/cicds/cicd-delete", async (req: any, res) => {
+  try {
+    // console.log(JSON.parse(JSON.stringify(req.body.data)))
+    let post = await cicdModel.cicdData.findByIdAndRemove({
+      _id: JSON.parse(JSON.stringify(req.body.data)),
+    });
+    res.send(post);
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+/////////////////////////////////////////////////////////////////////
 //GET Users
 app.get("/users", async (req, res) => {
   try {
     // let hosts = await owlModel.serviceHost.find({}).sort({_id:-1});
     // let hosts = await owlModel.serviceHost.find({}).select('ipAddress hostName port hostMetrics.DiskFree hostMetrics.MemFree hostMetrics.CpuUsage linkTo userName userPass groupName clusterName envName vmName note status hostCheck metricsCheck createdAt updatedAt').sort({_id:-1});
-    let hosts = await userModel.userData.find({});
+    let users = await userModel.userData.find({});
     // res.send({data: getEncryptedData(hosts)});
-    res.send({ data: hosts });
+    res.send({ data: users });
   } catch (e) {
     res.status(500);
   }
@@ -65,7 +127,6 @@ app.put("/users/update", async (req: any, res) => {
     // let tempData = JSON.parse(getDecryptedData(req.body.data));
     let tempData = JSON.parse(JSON.stringify(req.body.data));
     let id = JSON.parse(JSON.stringify(req.body.id));
-    console.log(id);
     let post = await userModel.userData.findOneAndUpdate(
       { _id: id },
       tempData,
@@ -116,6 +177,8 @@ app.post("/users/login", async (req: any, res) => {
   }
 });
 
+/////////////////////////////////////////////////////////////////////
+
 async function ssh(host: string, user: string, pass: string, command: any) {
   let output: any = [];
 
@@ -144,6 +207,8 @@ async function ssh(host: string, user: string, pass: string, command: any) {
   return output;
 }
 
+/////////////////////////////////////////////////////////////////////
+
 //POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {
   try {
@@ -162,3 +227,5 @@ app.post("/connect/ssh", async (req: any, res) => {
   }
 });
 // ssh("192.168.120.135", "owlsnest", "Tsen$2021%slwo", "cat /etc/os-release");
+
+/////////////////////////////////////////////////////////////////////
