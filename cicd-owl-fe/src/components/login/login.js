@@ -15,9 +15,9 @@ function Login() {
     let status = '';
 
     useEffect(() => {
-        const validateToken = async () => {
-            let token = localStorage.getItem('token');
-            if (token) {
+        let token = localStorage.getItem('token');
+        if (token) {
+            const validateToken = async () => {
                 let res = await fetch('http://192.168.10.108:8888/users/login/token', {
                     method: 'POST',
                     headers: {
@@ -32,8 +32,8 @@ function Login() {
                     navigate("/dashboard");
                 }
             }
+            validateToken();
         }
-        validateToken();
     }, []);
 
     let Greeting = () => {

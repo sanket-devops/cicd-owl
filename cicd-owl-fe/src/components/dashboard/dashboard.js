@@ -8,10 +8,13 @@ import { Toast } from 'primereact/toast';
 function Dashboard() {
     const navigate = useNavigate();
     let toast = useRef(null);
+    // let cicdData = useRef(null);
+    let [cicdData, setCicdData] = useState('');
+
     useEffect(() => {
-        const validateToken = async () => {
-            let token = localStorage.getItem('token');
-            if (token) {
+        let token = localStorage.getItem('token');
+        if (token) {
+            const validateToken = async () => {
                 let res = await fetch('http://192.168.10.108:8888/users/login/token', {
                     method: 'POST',
                     headers: {
@@ -22,12 +25,23 @@ function Dashboard() {
                         "data": token
                     })
                 })
-                if (res.status === 401) {
+                if (res.status === 200) {
+                    let cicdRes = await fetch('http://192.168.10.108:8888/cicds');
+                    let cicds = await cicdRes.json();
+                    // cicdData = cicds;
+                    setCicdData(cicds)
+                    // console.log(cicds.data[0])
+                    console.log(cicds.data)
+                }
+                else if (res.status === 401) {
                     navigate("/login");
                 }
             }
+            validateToken();
         }
-        validateToken();
+        else {
+            navigate("/login");
+        }
     }, []);
 
     let LogoutClick = async () => {
@@ -39,7 +53,7 @@ function Dashboard() {
         <>
             <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />
             <Toast ref={toast} />
-            <h1>Dashboard</h1>
+            <ul>{cicdData.map((item)=>(<li>[{item}] {item.itemName}</li>))}</ul>
             {/* <div className="card flex justify-content-center">
                 <div className="flex flex-column gap-2">
                     <label htmlFor="username">Username</label>
