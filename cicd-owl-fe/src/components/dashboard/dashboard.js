@@ -8,16 +8,30 @@ import { Toast } from 'primereact/toast';
 function Dashboard() {
     const navigate = useNavigate();
     let toast = useRef(null);
-    let isUserLoggedIn = localStorage.getItem('isLoggedIn');
-
     useEffect(() => {
-        if (isUserLoggedIn === "false") {
-            navigate("/login");
+        const validateToken = async () => {
+            let token = localStorage.getItem('token');
+            if (token) {
+                let res = await fetch('http://192.168.10.108:8888/users/login/token', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "data": token
+                    })
+                })
+                if (res.status === 401) {
+                    navigate("/login");
+                }
+            }
         }
-      });
+        validateToken();
+    }, []);
 
     let LogoutClick = async () => {
-        localStorage.setItem('isLoggedIn', false);
+        localStorage.removeItem('token');
         navigate("/login");
     }
 

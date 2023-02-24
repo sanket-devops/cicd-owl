@@ -31,6 +31,23 @@ app.get("/", (req, res) => {
   res.send(`CICD-OWL Is Running...`);
 });
 
+const makeToken = (length: number) => {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
+let token: any = makeToken(48);
+
+setInterval(()=>{
+  token = makeToken(48)
+  // console.log(token)
+}, 60000 * 60);
 
 /////////////////////////////////////////////////////////////////////
 
@@ -151,6 +168,27 @@ app.post("/users/user-delete", async (req: any, res) => {
   }
 });
 
+//POST Login User token validation
+app.post("/users/login/token", async (req: any, res) => {
+  try {
+    // let tempData = JSON.parse(getDecryptedData(req.body.data));
+    // console.log(req.body.data)
+    let userToken = JSON.parse(JSON.stringify(req.body.data));
+    if (userToken === token) {
+      console.log(token)
+      res.send({"token": "Token Validate"})
+    } else {
+      console.log(token)
+      res.status(401);
+      res.send({"token": "Token Invalidate..."});
+    }
+  } catch (e) {
+    console.log(e);
+    res.status(500);
+    res.send({ message: e.message });
+  }
+});
+
 //POST Login User
 app.post("/users/login", async (req: any, res) => {
   try {
@@ -161,7 +199,7 @@ app.post("/users/login", async (req: any, res) => {
     if (await userData) {
       // console.log(await userData)
       if ((postData.userName === userData.userName) && (postData.userPass === userData.userPass)) {
-        res.send(userData);
+        res.send({"token": token});
       } else {
         res.status(401);
         res.send({"error": "Incorrect password check your password..."});

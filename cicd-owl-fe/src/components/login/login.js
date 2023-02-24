@@ -15,11 +15,26 @@ function Login() {
     let status = '';
 
     useEffect(() => {
-        let isUserLoggedIn = localStorage.getItem('isLoggedIn');
-        if (isUserLoggedIn === "true") {
-            navigate("/dashboard");
+        const validateToken = async () => {
+            let token = localStorage.getItem('token');
+            if (token) {
+                let res = await fetch('http://192.168.10.108:8888/users/login/token', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "data": token
+                    })
+                })
+                if (res.status === 200) {
+                    navigate("/dashboard");
+                }
+            }
         }
-    });
+        validateToken();
+    }, []);
 
     let Greeting = () => {
         if (isLoggedIn) {
@@ -55,13 +70,13 @@ function Login() {
             let resData = await res.json();
             if (res.status === 200) {
                 setIsLoggedIn(true);
-                localStorage.setItem('isLoggedIn', true)
-                status = await resData.userName;
-                toast.current.show({ severity: 'success', summary: 'Success', detail: status });
+                localStorage.setItem('token', resData.token)
+                // status = await resData.userName;
+                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
                 navigate("/dashboard");
             } else {
                 setIsLoggedIn(false);
-                localStorage.setItem('isLoggedIn', false)
+                // localStorage.setItem('isLoggedIn', false)
                 status = await resData.error;
                 toast.current.show({ severity: 'error', summary: 'Error', detail: status });
             }
