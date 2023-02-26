@@ -5,6 +5,11 @@ import { InputText } from "primereact/inputtext";
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 
+async function dashboardData(cicdData, setCicdData) {
+    await fetch('http://192.168.10.108:8888/cicds').then(res => res.json()).then((data) => {setCicdData(data)});
+    console.log(await cicdData.data) 
+}
+
 function Dashboard() {
     const navigate = useNavigate();
     let toast = useRef(null);
@@ -26,12 +31,7 @@ function Dashboard() {
                     })
                 })
                 if (res.status === 200) {
-                    let cicdRes = await fetch('http://192.168.10.108:8888/cicds');
-                    let cicds = await cicdRes.json();
-                    // cicdData = cicds;
-                    setCicdData(cicds)
-                    // console.log(cicds.data[0])
-                    console.log(cicds.data)
+                    await dashboardData(cicdData, setCicdData);
                 }
                 else if (res.status === 401) {
                     navigate("/login");
@@ -53,7 +53,9 @@ function Dashboard() {
         <>
             <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />
             <Toast ref={toast} />
-            <ul>{cicdData.map((item)=>(<li>[{item}] {item.itemName}</li>))}</ul>
+            {/* <p>{cicdData.data.data}</p> */}
+            {/* <ul>{cicdData.map((item)=>(<li>[{item}] {item.itemName}</li>))}</ul> */}
+            {/* <ul>{cicdData.data.map(item => <div>{item.itemName}</div>)}</ul> */}
             {/* <div className="card flex justify-content-center">
                 <div className="flex flex-column gap-2">
                     <label htmlFor="username">Username</label>
