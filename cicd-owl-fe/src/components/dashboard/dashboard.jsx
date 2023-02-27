@@ -110,8 +110,6 @@ function Dashboard() {
         }
     };
     
-
-
     const updated = (cicdData) => {
         let date = new Date(cicdData.updatedAt).toLocaleString("en-US", {timeZone: "America/New_York",timeStyle: "short",dateStyle: "short"});
         return date;
@@ -138,7 +136,6 @@ function Dashboard() {
             <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />
             <Toast ref={toast} />
 
-
             <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
             <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
                 dataKey="_id" paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
@@ -150,11 +147,6 @@ function Dashboard() {
                 <Column field={updated} header="Updated" sortable></Column>
                 <Column field={created} header="Created" sortable></Column>
                 <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
-                {/* <Column field="image" header="Image" body={imageBodyTemplate}></Column>
-                <Column field="price" header="Price" body={priceBodyTemplate} sortable style={{ minWidth: '8rem' }}></Column>
-                <Column field="category" header="Category" sortable style={{ minWidth: '10rem' }}></Column>
-                <Column field="rating" header="Reviews" body={ratingBodyTemplate} sortable style={{ minWidth: '12rem' }}></Column>
-                <Column field="inventoryStatus" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '12rem' }}></Column> */}
             </DataTable>
         </>
     )
