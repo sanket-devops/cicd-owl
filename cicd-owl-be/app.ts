@@ -47,7 +47,7 @@ let token: any = makeToken(48);
 setInterval(()=>{
   token = makeToken(48)
   // console.log(token)
-}, 60000 * 60);
+}, 60000 * 1440);
 
 /////////////////////////////////////////////////////////////////////
 
