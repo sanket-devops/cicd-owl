@@ -72,7 +72,7 @@ function Login() {
                 setIsLoggedIn(true);
                 localStorage.setItem('token', resData.token)
                 // status = await resData.userName;
-                toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
+                // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
                 navigate("/dashboard");
             } else {
                 setIsLoggedIn(false);
