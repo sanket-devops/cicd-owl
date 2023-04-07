@@ -34,6 +34,9 @@ function Login() {
             }
             validateToken();
         }
+        else{
+            toast.current.show({ severity: 'success', summary: 'Success', detail: 'Logout Success' });
+        }
     }, []);
 
     let Greeting = () => {

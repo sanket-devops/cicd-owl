@@ -13,29 +13,28 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import CicdItem from './cicd/cicd'
+// import CicdItem from './cicd/cicd'
 
+
+export const selectedCicdDataIs = []
 
 function Dashboard() {
     let emptyCicd = {
-        id: null,
-        name: '',
-        image: null,
-        description: '',
-        category: null,
-        price: 0,
-        quantity: 0,
-        rating: 0,
-        inventoryStatus: 'INSTOCK'
+        "itemName": "",
+        "status": "",
+        "cicdStages": [],
+        "cicdStagesOutput": []
     };
     const navigate = useNavigate();
     let toast = useRef(null);
     let [cicdData, setCicdData] = useState([]);
+    let [showCicdData, setShowCicdData] = useState([]);
     const [selectedItems, setSelectedItems] = useState(null);
     const [globalFilter, setGlobalFilter] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [cicd, setCicd] = useState(emptyCicd);
     const [cicdDialog, setCicdDialog] = useState(false);
+    const [showCicdDialog, setShowCicdDialog] = useState(false);
     const [cicds, setCicds] = useState(null);
     const [deleteCicdDialog, setDeleteCicdDialog] = useState(false);
     const [deleteCicdsDialog, setDeleteCicdsDialog] = useState(false);
@@ -80,6 +79,16 @@ function Dashboard() {
         setCicdDialog(true);
     };
 
+    let openCicd = (cicdShow) => {
+        if (cicdShow.cicdStagesOutput[0]) {
+            setShowCicdData([cicdShow.cicdStagesOutput[0]]);
+            console.log(cicdShow);
+            setSubmitted(false);
+            setShowCicdDialog(true);
+        }
+
+    };
+
     const hideDeleteCicdDialog = () => {
         setDeleteCicdDialog(false);
     };
@@ -91,6 +100,7 @@ function Dashboard() {
     const hideDialog = () => {
         setSubmitted(false);
         setCicdDialog(false);
+        setShowCicdDialog(false);
     };
 
     const deleteCicd = () => {
@@ -112,13 +122,30 @@ function Dashboard() {
     };
 
     const saveCicd = () => {
-        console.log("Cicd Save...")
+        console.log(cicd)
+        fetch('http://192.168.10.108:8888/cicds/cicd-save', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "data": cicd
+            })
+        })
+        setCicdDialog(false);
     }
 
     const cicdDialogFooter = (
         <React.Fragment>
             <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
             <Button label="Save" icon="pi pi-check" onClick={saveCicd} />
+        </React.Fragment>
+    );
+    const showCicdDialogFooter = (
+        <React.Fragment>
+            <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
+            {/* <Button label="Save" icon="pi pi-check" onClick={saveCicd} /> */}
         </React.Fragment>
     );
     const deleteCicdDialogFooter = (
@@ -141,11 +168,8 @@ function Dashboard() {
 
     let LogoutClick = async () => {
         localStorage.removeItem('token');
-        toast.current.show({ severity: 'success', summary: 'Success', detail: 'Logout Success' });
-        setTimeout(() => {
-            navigate("/login");
-        }, 5000);
-
+        // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Logout Success' });
+        navigate("/login");
     }
 
     const leftToolbarTemplate = () => {
@@ -201,7 +225,14 @@ function Dashboard() {
         let date = new Date(cicdData.createdAt).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
         return date;
     }
-
+    const startTime = (showCicdData) => {
+        let date = new Date(showCicdData.startTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
+        return date;
+    }
+    const endTime = (showCicdData) => {
+        let date = new Date(showCicdData.endTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
+        return date;
+    }
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
             <h4 className="m-0">Manage cicds</h4>
@@ -212,11 +243,11 @@ function Dashboard() {
         </div>
     );
 
-    const onInputChange = (e, name) => {
+    const onInputChange = (e, itemName) => {
         const val = (e.target && e.target.value) || '';
         let _cicd = { ...cicd };
 
-        _cicd[`${name}`] = val;
+        _cicd[`${itemName}`] = val;
 
         setCicd(_cicd);
     };
@@ -236,14 +267,10 @@ function Dashboard() {
 
         setCicd(_cicd);
     };
-
-    let openCicd = async (cicdId) => {
-        console.log(cicdId)
-        navigate("/cicd");
-    }
     // const footer = `In total there are ${cicdData ? cicdData.length : 0} cicds.`;
 
     return (
+        <>
         <div>
             <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />
             <Toast ref={toast} />
@@ -262,58 +289,15 @@ function Dashboard() {
                     <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
                 </DataTable>
             </div>
-
+            
             <Dialog visible={cicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
-                {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />}
+                {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
                 <div className="field">
                     <label htmlFor="name" className="font-bold">
                         Name
                     </label>
-                    <InputText id="name" value={cicd.name} onChange={(e) => onInputChange(e, 'name')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.name })} />
-                    {submitted && !cicd.name && <small className="p-error">Name is required.</small>}
-                </div>
-                <div className="field">
-                    <label htmlFor="description" className="font-bold">
-                        Description
-                    </label>
-                    <InputTextarea id="description" value={cicd.description} onChange={(e) => onInputChange(e, 'description')} required rows={3} cols={20} />
-                </div>
-
-                <div className="field">
-                    <label className="mb-3 font-bold">Category</label>
-                    <div className="formgrid grid">
-                        <div className="field-radiobutton col-6">
-                            <RadioButton inputId="category1" name="category" value="Accessories" onChange={onCategoryChange} checked={cicd.category === 'Accessories'} />
-                            <label htmlFor="category1">Accessories</label>
-                        </div>
-                        <div className="field-radiobutton col-6">
-                            <RadioButton inputId="category2" name="category" value="Clothing" onChange={onCategoryChange} checked={cicd.category === 'Clothing'} />
-                            <label htmlFor="category2">Clothing</label>
-                        </div>
-                        <div className="field-radiobutton col-6">
-                            <RadioButton inputId="category3" name="category" value="Electronics" onChange={onCategoryChange} checked={cicd.category === 'Electronics'} />
-                            <label htmlFor="category3">Electronics</label>
-                        </div>
-                        <div className="field-radiobutton col-6">
-                            <RadioButton inputId="category4" name="category" value="Fitness" onChange={onCategoryChange} checked={cicd.category === 'Fitness'} />
-                            <label htmlFor="category4">Fitness</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="formgrid grid">
-                    <div className="field col">
-                        <label htmlFor="price" className="font-bold">
-                            Price
-                        </label>
-                        <InputNumber id="price" value={cicd.price} onValueChange={(e) => onInputNumberChange(e, 'price')} mode="currency" currency="USD" locale="en-US" />
-                    </div>
-                    <div className="field col">
-                        <label htmlFor="quantity" className="font-bold">
-                            Quantity
-                        </label>
-                        <InputNumber id="quantity" value={cicd.quantity} onValueChange={(e) => onInputNumberChange(e, 'quantity')} />
-                    </div>
+                    <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
+                    {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
                 </div>
             </Dialog>
 
@@ -334,7 +318,25 @@ function Dashboard() {
                     {cicd && <span>Are you sure you want to delete the selected cicds?</span>}
                 </div>
             </Dialog>
+
+            <Dialog visible={showCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}>
+                <div>
+                    <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
+                        dataKey="_id" paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
+                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
+                        <Column selectionMode="single" exportable={false}></Column>
+                        <Column field="buildNumber" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                        <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
+                        <Column field={updated} header="Updated" sortable></Column>
+                        <Column field={created} header="Created" sortable></Column>
+                        <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
+                    </DataTable>
+                </div>
+            </Dialog>
+
         </div>
+        </>
     )
 }
 
