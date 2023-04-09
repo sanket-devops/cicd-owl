@@ -34,6 +34,7 @@ function Dashboard() {
     const [submitted, setSubmitted] = useState(false);
     const [cicd, setCicd] = useState(emptyCicd);
     const [cicdDialog, setCicdDialog] = useState(false);
+    const [editCicdDialog, setEditCicdDialog] = useState(false);
     const [showCicdDialog, setShowCicdDialog] = useState(false);
     const [cicds, setCicds] = useState(null);
     const [deleteCicdDialog, setDeleteCicdDialog] = useState(false);
@@ -106,6 +107,7 @@ function Dashboard() {
     const hideDialog = () => {
         setSubmitted(false);
         setCicdDialog(false);
+        setEditCicdDialog(false);
         setShowCicdDialog(false);
     };
 
@@ -129,9 +131,19 @@ function Dashboard() {
         setTimeout(() => {
             loadData();
         }, 1000);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
+        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicd Deleted', life: 3000 });
         setDeleteCicdDialog(false);
         setCicd(emptyCicd);
+    };
+
+    const editCicdItem = (rowData) => {
+        let _cicd = rowData;
+        setCicd(_cicd)
+        setEditCicdDialog(true)
+        console.log(cicd)
+        setSubmitted(false);
+        // setCicdDialog(false);
+        // setCicd(emptyCicd);
     };
 
     const deleteSelectedCicds = () => {
@@ -158,12 +170,40 @@ function Dashboard() {
             loadData();
         }, 1000);
         setCicdDialog(false);
+        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
+    }
+
+    const updateCicd = () => {
+        fetch('http://192.168.10.108:8888/cicds/update', {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "id": cicd._id,
+                "data": cicd
+            })
+        })
+        console.log(cicd)
+        setTimeout(() => {
+            loadData();
+        }, 1000);
+        setEditCicdDialog(false);
+        setCicd(emptyCicd);
+        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Updated', life: 3000 });
     }
 
     const cicdDialogFooter = (
         <React.Fragment>
             <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
             <Button label="Save" icon="pi pi-check" onClick={saveCicd} />
+        </React.Fragment>
+    );
+    const editCicdDialogFooter = (
+        <React.Fragment>
+            <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
+            <Button label="Save" icon="pi pi-check" onClick={updateCicd} />
         </React.Fragment>
     );
     const showCicdDialogFooter = (
@@ -192,7 +232,6 @@ function Dashboard() {
 
     let LogoutClick = async () => {
         localStorage.removeItem('token');
-        // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Logout Success' });
         navigate("/login");
     }
 
@@ -213,7 +252,7 @@ function Dashboard() {
         return (
             <React.Fragment>
                 <Button icon="pi pi-play" rounded outlined className="mr-2" />
-                <Button icon="pi pi-pencil" rounded outlined className="mr-2" />
+                <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={(e) => editCicdItem(rowData)} />
                 <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={(e) => deleteCicdItem(rowData)} />
             </React.Fragment>
         );
@@ -316,6 +355,17 @@ function Dashboard() {
                 </div>
 
                 <Dialog visible={cicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
+                    {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
+                    <div className="field">
+                        <label htmlFor="name" className="font-bold">
+                            Name
+                        </label>
+                        <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
+                        {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
+                    </div>
+                </Dialog>
+
+                <Dialog visible={editCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Edit cicd" modal className="p-fluid" footer={editCicdDialogFooter} onHide={hideDialog}>
                     {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
                     <div className="field">
                         <label htmlFor="name" className="font-bold">
