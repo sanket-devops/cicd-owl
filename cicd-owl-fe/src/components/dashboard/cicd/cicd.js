@@ -4,7 +4,7 @@ import { InputText } from "primereact/inputtext";
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import {selectedCicdDataIs} from '../dashboard';
+// import {selectedCicdDataIs} from '../dashboard';
 
 // class Cicd extends React.Component {
 
@@ -143,7 +143,7 @@ import {selectedCicdDataIs} from '../dashboard';
 // }
 
 const Cicd = () => {
-    console.log(selectedCicdDataIs)
+    console.log("This is cicd")
 
     return (
      <div>

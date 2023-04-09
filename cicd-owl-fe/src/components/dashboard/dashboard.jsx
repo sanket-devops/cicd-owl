@@ -13,10 +13,11 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
+import { getAllCicd } from '../../service/dashboard.service';
 // import CicdItem from './cicd/cicd'
 
-
-export const selectedCicdDataIs = []
+// getAllCicd();
+// export const selectedCicdDataIs = []
 
 function Dashboard() {
     let emptyCicd = {
@@ -57,11 +58,13 @@ function Dashboard() {
                     })
                 })
                 if (res.status === 200) {
-                    await fetch('http://192.168.10.108:8888/cicds').then(res => res.json()).then((res) => {
-                        setCicdData(res.data)
-                        toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-                        // console.log(cicdData)
-                    });
+                    setCicdData(await getAllCicd());
+                    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
+                    // await fetch('http://192.168.10.108:8888/cicds').then(res => res.json()).then((res) => {
+                    //     setCicdData(res.data)
+                    //     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
+                    //     // console.log(cicdData)
+                    // });
                 }
                 else if (res.status === 401) {
                     navigate("/login");
@@ -142,8 +145,6 @@ function Dashboard() {
         setEditCicdDialog(true)
         console.log(cicd)
         setSubmitted(false);
-        // setCicdDialog(false);
-        // setCicd(emptyCicd);
     };
 
     const deleteSelectedCicds = () => {
