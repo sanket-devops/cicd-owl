@@ -3,7 +3,7 @@ import environment from '../environments/environment';
 // import {environment} from '../../environments/environment';
 // import {Observable} from 'rxjs';
 
-export const API_ENDPOINT = environment.API_BASE_URL + '/cicds';
+export const API_ENDPOINT = environment.API_BASE_URL;
 
 // declare let moment: any;
 // declare let CryptoJS: any;

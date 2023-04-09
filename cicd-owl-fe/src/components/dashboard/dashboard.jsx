@@ -43,6 +43,10 @@ function Dashboard() {
     const [selectedCicds, setSelectedCicds] = useState(null);
     const dt = useRef(null);
 
+    let loadData = async () => {
+        setCicdData(await getAllCicd());
+    };
+
     useEffect(() => {
         let token = localStorage.getItem('token');
         if (token) {
@@ -58,13 +62,8 @@ function Dashboard() {
                     })
                 })
                 if (res.status === 200) {
-                    setCicdData(await getAllCicd());
+                    loadData();
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-                    // await fetch('http://192.168.10.108:8888/cicds').then(res => res.json()).then((res) => {
-                    //     setCicdData(res.data)
-                    //     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-                    //     // console.log(cicdData)
-                    // });
                 }
                 else if (res.status === 401) {
                     navigate("/login");
@@ -77,13 +76,6 @@ function Dashboard() {
         }
     }, []);
 
-    let loadData = async () => {
-        await fetch('http://192.168.10.108:8888/cicds').then(res => res.json()).then((res) => {
-            setCicdData(res.data)
-            // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-        });
-    };
-
     let openNew = () => {
         setCicd(emptyCicd);
         setSubmitted(false);
@@ -93,7 +85,6 @@ function Dashboard() {
     let openCicd = (cicdShow) => {
         if (cicdShow.cicdStagesOutput[0]) {
             setShowCicdData([cicdShow.cicdStagesOutput[0]]);
-            console.log(cicdShow);
             setSubmitted(false);
             setShowCicdDialog(true);
         }
@@ -143,7 +134,6 @@ function Dashboard() {
         let _cicd = rowData;
         setCicd(_cicd)
         setEditCicdDialog(true)
-        console.log(cicd)
         setSubmitted(false);
     };
 
@@ -186,7 +176,6 @@ function Dashboard() {
                 "data": cicd
             })
         })
-        console.log(cicd)
         setTimeout(() => {
             loadData();
         }, 1000);
