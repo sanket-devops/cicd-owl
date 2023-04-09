@@ -73,6 +73,13 @@ function Dashboard() {
         }
     }, []);
 
+    let loadData = async () => {
+        await fetch('http://192.168.10.108:8888/cicds').then(res => res.json()).then((res) => {
+            setCicdData(res.data)
+            // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
+        });
+    };
+
     let openNew = () => {
         setCicd(emptyCicd);
         setSubmitted(false);
@@ -86,7 +93,6 @@ function Dashboard() {
             setSubmitted(false);
             setShowCicdDialog(true);
         }
-
     };
 
     const hideDeleteCicdDialog = () => {
@@ -103,13 +109,29 @@ function Dashboard() {
         setShowCicdDialog(false);
     };
 
-    const deleteCicd = () => {
-        let _cicd = cicds.filter((val) => val.id !== cicd.id);
+    const deleteCicdItem = (rowData) => {
+        let _cicd = rowData;
+        setCicd(_cicd);
+        setDeleteCicdDialog(true);
+    };
 
-        setCicds(_cicd);
+    const deleteCicd = () => {
+        fetch('http://192.168.10.108:8888/cicds/cicd-delete', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "data": cicd._id
+            })
+        })
+        setTimeout(() => {
+            loadData();
+        }, 1000);
+        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
         setDeleteCicdDialog(false);
         setCicd(emptyCicd);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
     };
 
     const deleteSelectedCicds = () => {
@@ -122,7 +144,6 @@ function Dashboard() {
     };
 
     const saveCicd = () => {
-        console.log(cicd)
         fetch('http://192.168.10.108:8888/cicds/cicd-save', {
             method: 'POST',
             headers: {
@@ -133,6 +154,9 @@ function Dashboard() {
                 "data": cicd
             })
         })
+        setTimeout(() => {
+            loadData();
+        }, 1000);
         setCicdDialog(false);
     }
 
@@ -188,8 +212,9 @@ function Dashboard() {
     const actionBodyTemplate = (rowData) => {
         return (
             <React.Fragment>
+                <Button icon="pi pi-play" rounded outlined className="mr-2" />
                 <Button icon="pi pi-pencil" rounded outlined className="mr-2" />
-                <Button icon="pi pi-trash" rounded outlined severity="danger" />
+                <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={(e) => deleteCicdItem(rowData)} />
             </React.Fragment>
         );
     };
@@ -271,71 +296,71 @@ function Dashboard() {
 
     return (
         <>
-        <div>
-            <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />
-            <Toast ref={toast} />
-            <div className="card">
-                <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
-                {/* <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)} */}
-                <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
-                    dataKey="_id" paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
-                    paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
-                    <Column selectionMode="single" exportable={false}></Column>
-                    <Column field="itemName" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
-                    <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
-                    <Column field={updated} header="Updated" sortable></Column>
-                    <Column field={created} header="Created" sortable></Column>
-                    <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
-                </DataTable>
-            </div>
-            
-            <Dialog visible={cicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
-                {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
-                <div className="field">
-                    <label htmlFor="name" className="font-bold">
-                        Name
-                    </label>
-                    <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
-                    {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
-                </div>
-            </Dialog>
-
-            <Dialog visible={deleteCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdDialogFooter} onHide={hideDeleteCicdDialog}>
-                <div className="confirmation-content">
-                    <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {cicd && (
-                        <span>
-                            Are you sure you want to delete <b>{cicd.name}</b>?
-                        </span>
-                    )}
-                </div>
-            </Dialog>
-
-            <Dialog visible={deleteCicdsDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdsDialogFooter} onHide={hideDeleteCicdsDialog}>
-                <div className="confirmation-content">
-                    <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {cicd && <span>Are you sure you want to delete the selected cicds?</span>}
-                </div>
-            </Dialog>
-
-            <Dialog visible={showCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}>
-                <div>
-                    <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
+            <div>
+                <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />
+                <Toast ref={toast} />
+                <div className="card">
+                    <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
+                    {/* <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)} */}
+                    <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
                         dataKey="_id" paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
                         <Column selectionMode="single" exportable={false}></Column>
-                        <Column field="buildNumber" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                        <Column field="itemName" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
                         <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
                         <Column field={updated} header="Updated" sortable></Column>
                         <Column field={created} header="Created" sortable></Column>
                         <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
                     </DataTable>
                 </div>
-            </Dialog>
 
-        </div>
+                <Dialog visible={cicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
+                    {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
+                    <div className="field">
+                        <label htmlFor="name" className="font-bold">
+                            Name
+                        </label>
+                        <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
+                        {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
+                    </div>
+                </Dialog>
+
+                <Dialog visible={deleteCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdDialogFooter} onHide={hideDeleteCicdDialog}>
+                    <div className="confirmation-content">
+                        <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
+                        {cicd && (
+                            <span>
+                                Are you sure you want to delete <b>{cicd.name}</b>?
+                            </span>
+                        )}
+                    </div>
+                </Dialog>
+
+                <Dialog visible={deleteCicdsDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdsDialogFooter} onHide={hideDeleteCicdsDialog}>
+                    <div className="confirmation-content">
+                        <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
+                        {cicd && <span>Are you sure you want to delete the selected cicds?</span>}
+                    </div>
+                </Dialog>
+
+                <Dialog visible={showCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}>
+                    <div>
+                        <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
+                            dataKey="_id" paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
+                            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
+                            <Column selectionMode="single" exportable={false}></Column>
+                            <Column field="buildNumber" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                            <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
+                            <Column field={updated} header="Updated" sortable></Column>
+                            <Column field={created} header="Created" sortable></Column>
+                            <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
+                        </DataTable>
+                    </div>
+                </Dialog>
+
+            </div>
         </>
     )
 }
