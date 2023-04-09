@@ -5,7 +5,7 @@ import {API_ENDPOINT} from './constant.service';
 
 async function getAllCicd() {
   let data = undefined;
-  await fetch(API_ENDPOINT).then(res => res.json()).then((res) => {
+  await fetch(API_ENDPOINT + '/cicds').then(res => res.json()).then((res) => {
     data = res.data;
 });
 // console.log(data)
