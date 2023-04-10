@@ -13,7 +13,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { getAllCicd, validateToken } from '../../service/dashboard.service';
+import { getAllCicd, validateToken, __saveCicd, __updateCicd, __deleteCicd } from '../../service/dashboard.service';
 
 
 function Dashboard() {
@@ -99,19 +99,10 @@ function Dashboard() {
     };
 
     const deleteCicd = () => {
-        fetch('http://192.168.10.108:8888/cicds/cicd-delete', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "data": cicd._id
-            })
-        })
+        __deleteCicd(cicd)
         setTimeout(() => {
             loadData();
-        }, 1000);
+        }, 250);
         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicd Deleted', life: 3000 });
         setDeleteCicdDialog(false);
         setCicd(emptyCicd);
@@ -134,38 +125,19 @@ function Dashboard() {
     };
 
     const saveCicd = () => {
-        fetch('http://192.168.10.108:8888/cicds/cicd-save', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "data": cicd
-            })
-        })
+        __saveCicd(cicd)
         setTimeout(() => {
             loadData();
-        }, 1000);
+        }, 250);
         setCicdDialog(false);
         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
     }
 
     const updateCicd = () => {
-        fetch('http://192.168.10.108:8888/cicds/update', {
-            method: 'PUT',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "id": cicd._id,
-                "data": cicd
-            })
-        })
+        __updateCicd(cicd)
         setTimeout(() => {
             loadData();
-        }, 1000);
+        }, 250);
         setEditCicdDialog(false);
         setCicd(emptyCicd);
         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Updated', life: 3000 });
@@ -319,7 +291,7 @@ function Dashboard() {
                     <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
                     {/* <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)} */}
                     <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
-                        dataKey="_id" paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
+                        dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
                         <Column selectionMode="single" exportable={false}></Column>
@@ -374,7 +346,7 @@ function Dashboard() {
                 <Dialog visible={showCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}>
                     <div>
                         <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
-                            dataKey="_id" paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
+                            dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
                             <Column selectionMode="single" exportable={false}></Column>

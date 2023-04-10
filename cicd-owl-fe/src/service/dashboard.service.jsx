@@ -48,6 +48,51 @@ async function getAllCicd() {
   return data
 }
 
+// Save New CICD
+async function __saveCicd(data) {
+  fetch(API_ENDPOINT + '/cicds/cicd-save', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": data
+    })
+  })
+}
 
-export { userLogin, getAllCicd, validateToken };
+// Update CICD
+async function __updateCicd(data) {
+  fetch(API_ENDPOINT + '/cicds/update', {
+    method: 'PUT',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "id": data._id,
+      "data": data
+    })
+  })
+}
+
+// Delete CICD
+async function __deleteCicd(data) {
+  fetch(API_ENDPOINT + '/cicds/cicd-delete', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": data._id
+    })
+  })
+}
+
+
+
+
+export { userLogin, getAllCicd, validateToken, __saveCicd, __updateCicd, __deleteCicd };
 
