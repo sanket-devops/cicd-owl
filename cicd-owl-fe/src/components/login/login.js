@@ -3,8 +3,8 @@ import './login.css'
 import { InputText } from "primereact/inputtext";
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-// import Dashboard from './components/login/login'
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { userLogin, validateToken } from '../../service/dashboard.service';
 
 function Login() {
     const navigate = useNavigate();
@@ -17,24 +17,14 @@ function Login() {
     useEffect(() => {
         let token = localStorage.getItem('token');
         if (token) {
-            const validateToken = async () => {
-                let res = await fetch('http://192.168.10.108:8888/users/login/token', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        "data": token
-                    })
-                })
+            (async function () {
+                let res = await validateToken(token);
                 if (res.status === 200) {
                     navigate("/dashboard");
                 }
-            }
-            validateToken();
+            }());
         }
-        else{
+        else {
             toast.current.show({ severity: 'success', summary: 'Success', detail: 'Logout Success' });
         }
     }, []);
@@ -56,30 +46,14 @@ function Login() {
 
     let LoginClick = async () => {
         if (user) {
-            let res = await fetch('http://192.168.10.108:8888/users/login', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    "data": {
-                        "userName": user,
-                        "userPass": pass
-                    }
-                })
-            })
-            // let res = await fetch('http://192.168.10.108:8888/users');
+            let res = await userLogin(user, pass)
             let resData = await res.json();
             if (res.status === 200) {
                 setIsLoggedIn(true);
                 localStorage.setItem('token', resData.token)
-                // status = await resData.userName;
-                // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
                 navigate("/dashboard");
             } else {
                 setIsLoggedIn(false);
-                // localStorage.setItem('isLoggedIn', false)
                 status = await resData.error;
                 toast.current.show({ severity: 'error', summary: 'Error', detail: status });
             }

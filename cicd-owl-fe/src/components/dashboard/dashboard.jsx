@@ -13,11 +13,8 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { getAllCicd } from '../../service/dashboard.service';
-// import CicdItem from './cicd/cicd'
+import { getAllCicd, validateToken } from '../../service/dashboard.service';
 
-// getAllCicd();
-// export const selectedCicdDataIs = []
 
 function Dashboard() {
     let emptyCicd = {
@@ -50,17 +47,8 @@ function Dashboard() {
     useEffect(() => {
         let token = localStorage.getItem('token');
         if (token) {
-            const validateToken = async () => {
-                let res = await fetch('http://192.168.10.108:8888/users/login/token', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        "data": token
-                    })
-                })
+            (async function () {
+                let res = await validateToken(token);
                 if (res.status === 200) {
                     loadData();
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
@@ -68,8 +56,7 @@ function Dashboard() {
                 else if (res.status === 401) {
                     navigate("/login");
                 }
-            }
-            validateToken();
+            }());
         }
         else {
             navigate("/login");

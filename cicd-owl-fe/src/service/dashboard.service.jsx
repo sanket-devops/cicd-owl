@@ -1,106 +1,53 @@
 // import React, { useState, useRef, useEffect } from 'react';
-import {API_ENDPOINT} from './constant.service';
+import { API_ENDPOINT } from './constant.service';
 // import {Idashboard} from '../interface/Idashboard';
-// import {Ispeedtest} from '../interface/Ispeedtest';
 
+// User Login
+async function userLogin(user, pass) {
+  let data = await fetch(API_ENDPOINT + '/users/login', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": {
+        "userName": user,
+        "userPass": pass
+      }
+    })
+  })
+  return data
+}
+
+// Check Token Validation
+async function validateToken(token) {
+  let data = undefined;
+  if (token) {
+    data = await fetch(API_ENDPOINT + '/users/login/token', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "data": token
+      })
+    })
+  }
+  // console.log(data)
+  return data
+}
+
+// Get All CICD Items
 async function getAllCicd() {
   let data = undefined;
   await fetch(API_ENDPOINT + '/cicds').then(res => res.json()).then((res) => {
     data = res.data;
-});
-// console.log(data)
-return data
+  });
+  return data
 }
 
-export {getAllCicd};
 
-// @Injectable()
-// export class DashboardService {
+export { userLogin, getAllCicd, validateToken };
 
-  // url = '/notes/';
-
-  // cloneObj: Idashboard = undefined;
-  // editObj: Idashboard = undefined;
-
-  // speedObj: Ispeedtest = undefined;
-
-  // constructor(private http: HttpClient, public constantService: ConstantService) {
-  // }
-
-  // delete_soft(_id: string) {
-  //   return this.http.put(this.constantService.get_api_url(this.constantService.API_ENDPOINT + 'delete_soft/' + _id), {
-  //     _id: _id,
-  //     active: 0
-  //   });
-  // }
-
-  // delete(_id: string) {
-  //   return this.http.post(this.constantService.get_api_url(this.constantService.API_ENDPOINT + `/host-delete`), {data: this.constantService.getEncryptedData(_id)});
-  // }
-
-  // save(data: Partial<Idashboard>) {
-  //   return this.http.post(this.constantService.get_api_url(this.constantService.API_ENDPOINT + '/host-save'), {
-  //     data: this.constantService.getEncryptedData(data)
-  //   });
-  // }
-
-  // update(data: Partial<Idashboard>) {
-  //   return this.http.put(this.constantService.get_api_url(this.constantService.API_ENDPOINT + '/update'),
-  //     {
-  //       data: this.constantService.getEncryptedData(data),
-  //       id: this.constantService.getEncryptedData(data._id),
-  //     }
-  //   );
-  // }
-
-  // get(_id: string, populate?: string) {
-  //   return this.http.get<Partial<Idashboard>>(this.constantService.get_api_url(this.constantService.API_ENDPOINT + _id + `${populate ? '?populate=' + populate : ''}`));
-  // }
-
-  // // latestPull() {
-  // //   return this.http.get<Partial<Idashboard>>(this.constantService.get_api_url(this.constantService.API_ENDPOINT + '/latestPull'));
-  // // }
-
-  // async hostMetricsData(_id: any) {
-  //   let resp: any;
-  //   if (_id) {
-  //     resp = await this.http.get<Partial<Idashboard>[]>(this.constantService.get_api_url(this.constantService.API_ENDPOINT + '/hostMetrics/' + _id)).toPromise();
-  //     // console.log(resp);
-  //   }
-  //   return JSON.parse(this.constantService.getDecryptedData(resp.data));
-  // }
-
-  // async internetMetrics() {
-  //   let resp: any;
-  //     resp = await this.http.get<Partial<Ispeedtest>[]>(this.constantService.get_api_url(this.constantService.API_ENDPOINT + '/speedTest')).toPromise();
-  //     // console.log(this.constantService.getDecryptedData(resp.data));
-  //   return JSON.parse(this.constantService.getDecryptedData(resp.data));
-  // }
-
-  // async internetMetricsPullData(PullData: any) {
-  //   let resp: any;
-  //     resp = await this.http.get<Partial<Ispeedtest>[]>(this.constantService.get_api_url(this.constantService.API_ENDPOINT + '/speedTest/' + PullData)).toPromise();
-  //   return JSON.parse(this.constantService.getDecryptedData(resp.data));
-  // }
-
-  // async internetCheck(id: any, data: boolean) {
-  //   let resp: any;
-  //   resp = await this.http.get(this.constantService.get_api_url(this.constantService.API_ENDPOINT + '/speedTest/' + id + '/' + data)).toPromise();
-  //   // console.log(resp)
-  //   return resp;
-  // }
-
-  // async list(select?: string) {
-  //   let resp: any;
-  //   if (select) {
-  //     resp = await this.http.get<Partial<Idashboard>[]>(this.constantService.get_api_url(this.constantService.API_ENDPOINT + `select=${select}`)).toPromise();
-  //   } else {
-  //     resp = await this.http.get<Partial<Idashboard>[]>(this.constantService.get_api_url(this.constantService.API_ENDPOINT)).toPromise();
-  //   }
-  //   return JSON.parse(this.constantService.getDecryptedData(resp.data));
-  // }
-
-  // query(query: any) {
-  //   return this.http.post<Partial<Idashboard>[]>(this.constantService.get_api_url(this.constantService.API_ENDPOINT + `query`), query);
-  // }
-// }
