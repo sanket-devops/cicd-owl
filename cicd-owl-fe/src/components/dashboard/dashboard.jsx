@@ -188,13 +188,14 @@ function Dashboard() {
         return (
             <div className="flex flex-wrap gap-2">
                 <Button label="New" icon="pi pi-plus" severity="success" onClick={openNew} />
-                <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedItems || !selectedItems.length} />
+                {/* <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedItems || !selectedItems.length} /> */}
             </div>
         );
     };
 
     const rightToolbarTemplate = () => {
-        return <Button label="Export" icon="pi pi-upload" className="p-button-help" />;
+        // return <Button label="Export" icon="pi pi-upload" className="p-button-help" />;
+        return <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />;
     };
 
     const actionBodyTemplate = (rowData) => {
@@ -285,7 +286,7 @@ function Dashboard() {
     return (
         <>
             <div>
-                <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />
+                {/* <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} /> */}
                 <Toast ref={toast} />
                 <div className="card">
                     <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
