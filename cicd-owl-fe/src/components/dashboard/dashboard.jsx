@@ -7,6 +7,7 @@ import { Toolbar } from 'primereact/toolbar';
 import { Column } from 'primereact/column';
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from 'primereact/inputtextarea';
+import { Dropdown } from 'primereact/dropdown';
 import { RadioButton } from 'primereact/radiobutton';
 import { InputNumber } from 'primereact/inputnumber';
 import { Dialog } from 'primereact/dialog';
@@ -17,20 +18,39 @@ import { getAllCicd, validateToken, __saveCicd, __updateCicd, __deleteCicd } fro
 
 
 function Dashboard() {
+    let emptyStage = {
+        "stageName": "",
+        "remoteHost": "",
+        "command": ""
+    };
     let emptyCicd = {
         "itemName": "",
         "status": "",
-        "cicdStages": [],
+        "cicdStages": [
+            {
+                "stageName": "",
+                "remoteHost": "",
+                "command": ""
+            }],
         "cicdStagesOutput": []
     };
+    const hosts = [
+        { name: 'New York', code: 'NY' },
+        { name: 'Rome', code: 'RM' },
+        { name: 'London', code: 'LDN' },
+        { name: 'Istanbul', code: 'IST' },
+        { name: 'Paris', code: 'PRS' }
+    ];
     const navigate = useNavigate();
     let toast = useRef(null);
     let [cicdData, setCicdData] = useState([]);
+    const [selectedHost, setSelectedHost] = useState(null);
     let [showCicdData, setShowCicdData] = useState([]);
     const [selectedItems, setSelectedItems] = useState(null);
     const [globalFilter, setGlobalFilter] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [cicd, setCicd] = useState(emptyCicd);
+    const [stage, setStage] = useState(emptyStage);
     const [cicdDialog, setCicdDialog] = useState(false);
     const [editCicdDialog, setEditCicdDialog] = useState(false);
     const [showCicdDialog, setShowCicdDialog] = useState(false);
@@ -65,6 +85,7 @@ function Dashboard() {
 
     let openNew = () => {
         setCicd(emptyCicd);
+        setStage(emptyStage);
         setSubmitted(false);
         setCicdDialog(true);
     };
@@ -109,9 +130,9 @@ function Dashboard() {
     };
 
     const editCicdItem = (rowData) => {
-        let _cicd = rowData;
-        setCicd(_cicd)
-        setEditCicdDialog(true)
+        setCicd(rowData)
+        setStage(rowData.cicdStages[0])
+        setCicdDialog(true)
         setSubmitted(false);
     };
 
@@ -124,24 +145,49 @@ function Dashboard() {
         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Deleted', life: 3000 });
     };
 
-    const saveCicd = () => {
-        __saveCicd(cicd)
-        setTimeout(() => {
-            loadData();
-        }, 250);
-        setCicdDialog(false);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
+    const saveCicd = async () => {
+        setSubmitted(true);
+        if (cicd.itemName.trim()) {
+            if (cicd._id) {
+                cicd.cicdStages = [stage]
+                console.log(cicd)
+                __updateCicd(cicd)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Updated', life: 3000 });
+            } else {
+                cicd.cicdStages = [stage]
+                console.log(cicd)
+                __saveCicd(cicd)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
+            }
+            setTimeout(() => {
+                loadData();
+            }, 250);
+            setCicdDialog(false);
+            // toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
+        }
     }
+    const findIndexById = (id) => {
+        let index = -1;
 
-    const updateCicd = () => {
-        __updateCicd(cicd)
-        setTimeout(() => {
-            loadData();
-        }, 250);
-        setEditCicdDialog(false);
-        setCicd(emptyCicd);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Updated', life: 3000 });
-    }
+        for (let i = 0; i < cicd.length; i++) {
+            if (cicd[i]._id === id) {
+                index = i;
+                break;
+            }
+        }
+        return index;
+    };
+
+    // const updateCicd = () => {
+    //     setSubmitted(true);
+    //     __updateCicd(cicd)
+    //     setTimeout(() => {
+    //         loadData();
+    //     }, 250);
+    //     setEditCicdDialog(false);
+    //     setCicd(emptyCicd);
+    //     toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Updated', life: 3000 });
+    // }
 
     const cicdDialogFooter = (
         <React.Fragment>
@@ -152,7 +198,7 @@ function Dashboard() {
     const editCicdDialogFooter = (
         <React.Fragment>
             <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-            <Button label="Save" icon="pi pi-check" onClick={updateCicd} />
+            <Button label="Save" icon="pi pi-check" onClick={saveCicd} />
         </React.Fragment>
     );
     const showCicdDialogFooter = (
@@ -258,6 +304,7 @@ function Dashboard() {
     );
 
     const onInputChange = (e, itemName) => {
+        // console.log(cicd)
         const val = (e.target && e.target.value) || '';
         let _cicd = { ...cicd };
 
@@ -266,21 +313,32 @@ function Dashboard() {
         setCicd(_cicd);
     };
 
-    const onCategoryChange = (e) => {
-        let _cicd = { ...cicd };
+    // const stageNameChange = (e, stageName) => {
+    //     const val = (e.target && e.target.value) || '';
+    //     let _stage = { ...stage };
 
-        _cicd['category'] = e.value;
-        setCicd(_cicd);
+    //     _stage[`${stageName}`] = val;
+
+    //     setStage(_stage);
+    // };
+
+    const stageChange = (e, stageData) => {
+        const val = (e.target && e.target.value) || '';
+        let _stage = { ...stage };
+
+        _stage[`${stageData}`] = val;
+
+        setStage(_stage);
     };
 
-    const onInputNumberChange = (e, name) => {
-        const val = e.value || 0;
-        let _cicd = { ...cicd };
 
-        _cicd[`${name}`] = val;
+    const removeStageRow = (index) => {
+        cicd.cicdStages.splice(index, 1);
+    }
 
-        setCicd(_cicd);
-    };
+    const addStageRow = () => {
+        cicd.cicdStages.push({});
+    }
     // const footer = `In total there are ${cicdData ? cicdData.length : 0} cicds.`;
 
     return (
@@ -304,7 +362,7 @@ function Dashboard() {
                     </DataTable>
                 </div>
 
-                <Dialog visible={cicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
+                <Dialog visible={cicdDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
                     {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
                     <div className="field">
                         <label htmlFor="name" className="font-bold">
@@ -312,6 +370,39 @@ function Dashboard() {
                         </label>
                         <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
                         {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
+
+
+                        <div className="card">
+                            <label htmlFor="integer" className="font-bold block mb-2">
+                                Stages
+                            </label>
+                            <div id="stage" className="flex flex-wrap gap-3 mb-4">
+                                <div className="flex-auto">
+                                    <span className="p-float-label">
+                                        <InputText id="stageName" value={stage.stageName} onChange={(e) => stageChange(e, 'stageName')} className="w-full" />
+                                        <label htmlFor="Stage Name">Stage Name</label>
+                                    </span>
+                                </div>
+                                <div className="flex-auto">
+                                    <span className="p-float-label">
+                                        {/* <InputText id="hostName" keyfilter="num" className="w-full" /> */}
+                                        {/* <Dropdown value={selectedCity} onChange={(e) => setSelectedCity(e.value)} options={cities} optionLabel="name" placeholder="Select a City" className="w-full md:w-14rem" /> */}
+                                        <Dropdown value={stage.remoteHost} onChange={(e) => setSelectedHost(e.value)} options={hosts} optionLabel="Host Name" placeholder="Host Name" className="w-full md:w-14rem" />
+                                        <label htmlFor="Host Name">Host Name</label>
+                                    </span>
+                                </div>
+                                <div className="flex-auto">
+                                    <span className="p-float-label">
+                                        <InputTextarea id="command" autoResize rows={1} cols={25} />
+                                        <label htmlFor="Command">Command</label>
+                                    </span>
+                                </div>
+                                <div className="flex-auto">
+                                    <Button type="button" icon="pi pi-plus" className="p-button-rounded p-button-success ml-2"></Button>
+                                    <Button type="button" icon="pi pi-minus" className="p-button-rounded p-button-danger ml-2"></Button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </Dialog>
 

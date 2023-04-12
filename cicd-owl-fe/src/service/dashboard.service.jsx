@@ -50,6 +50,7 @@ async function getAllCicd() {
 
 // Save New CICD
 async function __saveCicd(data) {
+  // console.log("Save Data: " + JSON.stringify(data));
   fetch(API_ENDPOINT + '/cicds/cicd-save', {
     method: 'POST',
     headers: {
@@ -60,6 +61,7 @@ async function __saveCicd(data) {
       "data": data
     })
   })
+  console.log(data)
 }
 
 // Update CICD

@@ -11,6 +11,7 @@ const hostname = "0.0.0.0";
 const port = 8888;
 const app = fastify;
 const userModel = require("./models/user.model");
+const hostModel = require("./models/host.model");
 const cicdModel = require("./models/cicd.model");
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
@@ -214,6 +215,91 @@ app.post("/users/login", async (req: any, res) => {
     res.send({ message: e.message });
   }
 });
+
+/////////////////////////////////////////////////////////////////////
+//GET Host
+app.get("/hosts", async (req, res) => {
+  try {
+    // let hosts = await owlModel.serviceHost.find({}).sort({_id:-1});
+    // let hosts = await owlModel.serviceHost.find({}).select('ipAddress hostName port hostMetrics.DiskFree hostMetrics.MemFree hostMetrics.CpuUsage linkTo userName userPass groupName clusterName envName vmName note status hostCheck metricsCheck createdAt updatedAt').sort({_id:-1});
+    let hosts = await hostModel.hostData.find({});
+    // res.send({data: getEncryptedData(hosts)});
+    res.send({ data: hosts });
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+//POST Save Host
+app.post("/hosts/host-save", async (req: any, res) => {
+  try {
+    // let tempData = JSON.parse(getDecryptedData(req.body.data));
+    // console.log(req.body.data)
+    let tempData = JSON.parse(JSON.stringify(req.body.data));
+    let saved = await hostModel.hostData.create(tempData);
+    res.send(saved);
+  } catch (e) {
+    console.log(e);
+    res.status(500);
+    res.send({ message: e.message });
+  }
+});
+
+//UPDATE Host
+app.put("/hosts/update", async (req: any, res) => {
+  try {
+    // let tempData = JSON.parse(getDecryptedData(req.body.data));
+    let tempData = JSON.parse(JSON.stringify(req.body.data));
+    let id = JSON.parse(JSON.stringify(req.body.id));
+    let post = await hostModel.hostData.findOneAndUpdate(
+      { _id: id },
+      tempData,
+      { new: true, runValidator: true }
+    );
+    res.send(post);
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+//DELETE Host
+app.post("/hosts/host-delete", async (req: any, res) => {
+  try {
+    // console.log(JSON.parse(JSON.stringify(req.body.data)))
+    let post = await hostModel.hostData.findByIdAndRemove({
+      _id: JSON.parse(JSON.stringify(req.body.data)),
+    });
+    res.send(post);
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+//POST Login User
+// app.post("/users/login", async (req: any, res) => {
+//   try {
+//     // let tempData = JSON.parse(getDecryptedData(req.body.data));
+//     // console.log(req.body.data)
+//     let postData = JSON.parse(JSON.stringify(req.body.data));
+//     let userData = await userModel.userData.findOne({ userName: postData.userName });
+//     if (await userData) {
+//       // console.log(await userData)
+//       if ((postData.userName === userData.userName) && (postData.userPass === userData.userPass)) {
+//         res.send({"token": token});
+//       } else {
+//         res.status(401);
+//         res.send({"error": "Incorrect password check your password..."});
+//       }
+//     } else {
+//       res.status(401);
+//       res.send({"error": "User Not Found..."});
+//     }
+//   } catch (e) {
+//     console.log(e);
+//     res.status(500);
+//     res.send({ message: e.message });
+//   }
+// });
 
 /////////////////////////////////////////////////////////////////////
 
