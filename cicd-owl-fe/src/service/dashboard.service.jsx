@@ -40,7 +40,7 @@ async function validateToken(token) {
 }
 
 // Get All CICD Items
-async function getAllCicd() {
+async function _getAllCicd() {
   let data = undefined;
   await fetch(API_ENDPOINT + '/cicds').then(res => res.json()).then((res) => {
     data = res.data;
@@ -49,7 +49,7 @@ async function getAllCicd() {
 }
 
 // Save New CICD
-async function __saveCicd(data) {
+async function _saveCicd(data) {
   // console.log("Save Data: " + JSON.stringify(data));
   fetch(API_ENDPOINT + '/cicds/cicd-save', {
     method: 'POST',
@@ -65,7 +65,7 @@ async function __saveCicd(data) {
 }
 
 // Update CICD
-async function __updateCicd(data) {
+async function _updateCicd(data) {
   fetch(API_ENDPOINT + '/cicds/update', {
     method: 'PUT',
     headers: {
@@ -80,7 +80,7 @@ async function __updateCicd(data) {
 }
 
 // Delete CICD
-async function __deleteCicd(data) {
+async function _deleteCicd(data) {
   fetch(API_ENDPOINT + '/cicds/cicd-delete', {
     method: 'POST',
     headers: {
@@ -93,8 +93,43 @@ async function __deleteCicd(data) {
   })
 }
 
+// Get All HOSTS
+async function _getAllHost() {
+  let data = undefined;
+  await fetch(API_ENDPOINT + '/hosts').then(res => res.json()).then((res) => {
+    data = res.data;
+  });
+  return data
+}
 
+// Update HOST
+async function _updateHost(data) {
+  fetch(API_ENDPOINT + '/hosts/update', {
+    method: 'PUT',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "id": data._id,
+      "data": data
+    })
+  })
+}
 
+// Delete HOST
+async function _deleteHost(data) {
+  fetch(API_ENDPOINT + '/hosts/host-delete', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": data._id
+    })
+  })
+}
 
-export { userLogin, getAllCicd, validateToken, __saveCicd, __updateCicd, __deleteCicd };
+export { userLogin, _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _getAllHost, _updateHost, _deleteHost };
 

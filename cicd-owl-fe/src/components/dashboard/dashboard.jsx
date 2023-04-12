@@ -14,10 +14,17 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { getAllCicd, validateToken, __saveCicd, __updateCicd, __deleteCicd } from '../../service/dashboard.service';
+import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 
 
 function Dashboard() {
+    let emptyHost = {
+        "hostName": "",
+        "hostAdd": "",
+        "hostUser": "",
+        "hostPass": "",
+        "hostWorkDir": ""
+    }
     let emptyStage = {
         "stageName": "",
         "remoteHost": "",
@@ -48,11 +55,15 @@ function Dashboard() {
     let [showCicdData, setShowCicdData] = useState([]);
     const [selectedItems, setSelectedItems] = useState(null);
     const [globalFilter, setGlobalFilter] = useState(null);
+    const [globalFilterStage, setGlobalFilterStage] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [cicd, setCicd] = useState(emptyCicd);
     const [stage, setStage] = useState(emptyStage);
+    const [newStage, setNewStage] = useState(emptyStage);
+    const [host, setHost] = useState(emptyHost);
     const [cicdDialog, setCicdDialog] = useState(false);
-    const [editCicdDialog, setEditCicdDialog] = useState(false);
+    const [stageDialog, setStageDialog] = useState(false);
+    const [hostDialog, setHostDialog] = useState(false);
     const [showCicdDialog, setShowCicdDialog] = useState(false);
     const [cicds, setCicds] = useState(null);
     const [deleteCicdDialog, setDeleteCicdDialog] = useState(false);
@@ -61,7 +72,8 @@ function Dashboard() {
     const dt = useRef(null);
 
     let loadData = async () => {
-        setCicdData(await getAllCicd());
+        setCicdData(await _getAllCicd());
+        setHost(await _getAllHost())
     };
 
     useEffect(() => {
@@ -83,11 +95,24 @@ function Dashboard() {
         }
     }, []);
 
-    let openNew = () => {
+    let openNewCicd = () => {
         setCicd(emptyCicd);
-        setStage(emptyStage);
+        setStage([]);
         setSubmitted(false);
         setCicdDialog(true);
+    };
+
+    let openNewStage = () => {
+        setStage([]);
+        setNewStage(emptyStage);
+        setSubmitted(false);
+        setStageDialog(true);
+    };
+
+    let openNewHost = () => {
+        setCicd(emptyHost);
+        setSubmitted(false);
+        setHostDialog(true);
     };
 
     let openCicd = (cicdShow) => {
@@ -109,8 +134,13 @@ function Dashboard() {
     const hideDialog = () => {
         setSubmitted(false);
         setCicdDialog(false);
-        setEditCicdDialog(false);
+        setHostDialog(false);
+        setStageDialog(false);
         setShowCicdDialog(false);
+    };
+
+    const hideStageDialog = () => {
+        setStageDialog(false);
     };
 
     const deleteCicdItem = (rowData) => {
@@ -120,7 +150,7 @@ function Dashboard() {
     };
 
     const deleteCicd = () => {
-        __deleteCicd(cicd)
+        _deleteCicd(cicd)
         setTimeout(() => {
             loadData();
         }, 250);
@@ -131,7 +161,7 @@ function Dashboard() {
 
     const editCicdItem = (rowData) => {
         setCicd(rowData)
-        setStage(rowData.cicdStages[0])
+        setStage(rowData.cicdStages)
         setCicdDialog(true)
         setSubmitted(false);
     };
@@ -151,43 +181,69 @@ function Dashboard() {
             if (cicd._id) {
                 cicd.cicdStages = [stage]
                 console.log(cicd)
-                __updateCicd(cicd)
-                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Updated', life: 3000 });
+                _updateCicd(cicd)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicd Updated', life: 3000 });
             } else {
                 cicd.cicdStages = [stage]
                 console.log(cicd)
-                __saveCicd(cicd)
-                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
+                _saveCicd(cicd)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicd Saved', life: 3000 });
             }
             setTimeout(() => {
                 loadData();
             }, 250);
             setCicdDialog(false);
+        }
+    }
+
+    const saveCicdStage = async () => {
+        setSubmitted(true);
+        if (newStage.stageName.trim()) {
+            if (stage._id) {
+                cicd.cicdStages = [stage]
+                console.log(cicd)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Stage Updated', life: 3000 });
+            } else {
+                cicd.cicdStages = [stage]
+                console.log(cicd)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Stage Saved', life: 3000 });
+            }
+            setTimeout(() => {
+                loadData();
+            }, 250);
+            setStageDialog(false);
+        }
+    }
+
+
+    const saveHost = async () => {
+        setSubmitted(true);
+        if (cicd.hostAdd.trim()) {
+            if (host._id) {
+                _updateHost(host)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Host Updated', life: 3000 });
+            } else {
+                _saveCicd(host)
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Host Saved', life: 3000 });
+            }
+            setTimeout(() => {
+                loadData();
+            }, 250);
+            setHostDialog(false);
             // toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
         }
     }
-    const findIndexById = (id) => {
-        let index = -1;
+    // const findIndexById = (id) => {
+    //     let index = -1;
 
-        for (let i = 0; i < cicd.length; i++) {
-            if (cicd[i]._id === id) {
-                index = i;
-                break;
-            }
-        }
-        return index;
-    };
-
-    // const updateCicd = () => {
-    //     setSubmitted(true);
-    //     __updateCicd(cicd)
-    //     setTimeout(() => {
-    //         loadData();
-    //     }, 250);
-    //     setEditCicdDialog(false);
-    //     setCicd(emptyCicd);
-    //     toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Updated', life: 3000 });
-    // }
+    //     for (let i = 0; i < cicd.length; i++) {
+    //         if (cicd[i]._id === id) {
+    //             index = i;
+    //             break;
+    //         }
+    //     }
+    //     return index;
+    // };
 
     const cicdDialogFooter = (
         <React.Fragment>
@@ -195,10 +251,16 @@ function Dashboard() {
             <Button label="Save" icon="pi pi-check" onClick={saveCicd} />
         </React.Fragment>
     );
-    const editCicdDialogFooter = (
+    const cicdStageDialogFooter = (
+        <React.Fragment>
+            <Button label="Cancel" icon="pi pi-times" outlined onClick={hideStageDialog} />
+            <Button label="Save" icon="pi pi-check" onClick={saveCicdStage} />
+        </React.Fragment>
+    );
+    const hostDialogFooter = (
         <React.Fragment>
             <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-            <Button label="Save" icon="pi pi-check" onClick={saveCicd} />
+            <Button label="Save" icon="pi pi-check" onClick={saveHost} />
         </React.Fragment>
     );
     const showCicdDialogFooter = (
@@ -233,12 +295,22 @@ function Dashboard() {
     const leftToolbarTemplate = () => {
         return (
             <div className="flex flex-wrap gap-2">
-                <Button label="New" icon="pi pi-plus" severity="success" onClick={openNew} />
+                <Button label="Cicd" icon="pi pi-plus" severity="success" onClick={openNewCicd} />
+                <Button label="Host" icon="pi pi-plus" severity="success" onClick={openNewHost} />
                 {/* <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedItems || !selectedItems.length} /> */}
             </div>
         );
     };
 
+    const leftToolbarStageTemplate = () => {
+        return (
+            <div className="flex no-flex-wrap gap-2">
+                <Button label="Stage" icon="pi pi-plus" severity="success" onClick={openNewStage} />
+                {/* <Button label="Host" icon="pi pi-plus" severity="success" onClick={openNewHost} /> */}
+                {/* <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedItems || !selectedItems.length} /> */}
+            </div>
+        );
+    };
     const rightToolbarTemplate = () => {
         // return <Button label="Export" icon="pi pi-upload" className="p-button-help" />;
         return <Button label="Logout" type="logout" className="p-button-danger logout-button" onClick={() => LogoutClick()} />;
@@ -295,7 +367,7 @@ function Dashboard() {
     }
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Manage cicds</h4>
+            <h4 className="m-0">Manage Cicds</h4>
             <span className="p-input-icon-left">
                 <i className="pi pi-search" />
                 <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Search..." />
@@ -303,8 +375,17 @@ function Dashboard() {
         </div>
     );
 
+    const headerStage = (
+        <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
+            <h4 className="m-0">Manage Stages</h4>
+            <span className="p-input-icon-left">
+                <i className="pi pi-search" />
+                <InputText type="search" onInput={(e) => setGlobalFilterStage(e.target.value)} placeholder="Search..." />
+            </span>
+        </div>
+    );
+
     const onInputChange = (e, itemName) => {
-        // console.log(cicd)
         const val = (e.target && e.target.value) || '';
         let _cicd = { ...cicd };
 
@@ -313,24 +394,25 @@ function Dashboard() {
         setCicd(_cicd);
     };
 
-    // const stageNameChange = (e, stageName) => {
-    //     const val = (e.target && e.target.value) || '';
-    //     let _stage = { ...stage };
-
-    //     _stage[`${stageName}`] = val;
-
-    //     setStage(_stage);
-    // };
-
     const stageChange = (e, stageData) => {
         const val = (e.target && e.target.value) || '';
-        let _stage = { ...stage };
+        let _stage = { ...newStage };
 
         _stage[`${stageData}`] = val;
 
-        setStage(_stage);
+        setNewStage(_stage);
+        console.log(stage)
     };
 
+    const stageHostChange = (e, stageHostName) => {
+        const val = (e.target.value.hostName) || '';
+        let _stage = { ...stage };
+
+        _stage[`${stageHostName}`] = val;
+
+        setStage(_stage);
+        setSelectedHost(val)
+    };
 
     const removeStageRow = (index) => {
         cicd.cicdStages.splice(index, 1);
@@ -363,7 +445,6 @@ function Dashboard() {
                 </div>
 
                 <Dialog visible={cicdDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
-                    {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
                     <div className="field">
                         <label htmlFor="name" className="font-bold">
                             Name
@@ -371,11 +452,63 @@ function Dashboard() {
                         <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
                         {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
 
+                        {/* <div className="card">
+                            <label htmlFor="integer" className="font-bold block mb-2">
+                                Stages
+                            </label>
+                        </div> */}
+                        <div className="card">
+                <Toolbar className="mb-4" left={leftToolbarStageTemplate}></Toolbar>
 
+                            <DataTable value={stage} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
+                                dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
+                                paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Stages" globalFilter={globalFilterStage} header={headerStage}>
+                                <Column selectionMode="multiple" exportable={false}></Column>
+                                <Column field="stageName" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                                <Column field="remoteHost" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                                <Column field="command" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                                {/* <Column field={updated} header="Updated" sortable></Column>
+                                <Column field={created} header="Created" sortable></Column> */}
+                                <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
+                            </DataTable>
+
+                            {/* <div id="stage" className="flex flex-wrap gap-3 mb-4">
+                                <div className="flex-auto">
+                                    <span className="p-float-label">
+                                        <InputText id="stageName" value={stage.stageName} onChange={(e) => stageChange(e, 'stageName')} className="w-full" />
+                                        <label htmlFor="Stage Name">Stage Name</label>
+                                    </span>
+                                </div>
+                                <div className="flex-auto">
+                                    <span className="p-float-label">
+                                        <Dropdown value={stage.remoteHost} onChange={(e) => stageHostChange(e, 'remoteHost') && setSelectedHost(e.value)} options={host} optionLabel="Host Name" placeholder="Host Name" className="w-full md:w-14rem" />
+                                        <label htmlFor="Host Name">Host Name</label>
+                                    </span>
+                                </div>
+                                <div className="flex-auto">
+                                    <span className="p-float-label">
+                                        <InputTextarea id="command" value={stage.command} onChange={(e) => stageChange(e, 'command')} autoResize rows={1} cols={25} />
+                                        <label htmlFor="Command">Command</label>
+                                    </span>
+                                </div>
+                                <div className="flex-auto">
+                                    <Button type="button" icon="pi pi-plus" className="p-button-rounded p-button-success ml-2"></Button>
+                                    <Button type="button" icon="pi pi-minus" className="p-button-rounded p-button-danger ml-2"></Button>
+                                </div>
+                            </div> */}
+                        </div>
+                    </div>
+                </Dialog>
+
+                <Dialog visible={stageDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Add Stage" modal className="p-fluid" footer={cicdStageDialogFooter} onHide={hideDialog}>
+                    <div className="field">
                         <div className="card">
                             <label htmlFor="integer" className="font-bold block mb-2">
                                 Stages
                             </label>
+                        </div>
+                        <div className="card">
                             <div id="stage" className="flex flex-wrap gap-3 mb-4">
                                 <div className="flex-auto">
                                     <span className="p-float-label">
@@ -385,15 +518,13 @@ function Dashboard() {
                                 </div>
                                 <div className="flex-auto">
                                     <span className="p-float-label">
-                                        {/* <InputText id="hostName" keyfilter="num" className="w-full" /> */}
-                                        {/* <Dropdown value={selectedCity} onChange={(e) => setSelectedCity(e.value)} options={cities} optionLabel="name" placeholder="Select a City" className="w-full md:w-14rem" /> */}
-                                        <Dropdown value={stage.remoteHost} onChange={(e) => setSelectedHost(e.value)} options={hosts} optionLabel="Host Name" placeholder="Host Name" className="w-full md:w-14rem" />
+                                        <Dropdown value={stage.remoteHost} onChange={(e) => stageHostChange(e, 'remoteHost') && setSelectedHost(e.value)} options={host} optionLabel="Host Name" placeholder="Host Name" className="w-full md:w-14rem" />
                                         <label htmlFor="Host Name">Host Name</label>
                                     </span>
                                 </div>
                                 <div className="flex-auto">
                                     <span className="p-float-label">
-                                        <InputTextarea id="command" autoResize rows={1} cols={25} />
+                                        <InputTextarea id="command" value={stage.command} onChange={(e) => stageChange(e, 'command')} autoResize rows={1} cols={25} />
                                         <label htmlFor="Command">Command</label>
                                     </span>
                                 </div>
@@ -406,14 +537,9 @@ function Dashboard() {
                     </div>
                 </Dialog>
 
-                <Dialog visible={editCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Edit cicd" modal className="p-fluid" footer={editCicdDialogFooter} onHide={hideDialog}>
+                <Dialog visible={hostDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={hostDialogFooter} onHide={hideDialog}>
                     {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
                     <div className="field">
-                        <label htmlFor="name" className="font-bold">
-                            Name
-                        </label>
-                        <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
-                        {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
                     </div>
                 </Dialog>
 
