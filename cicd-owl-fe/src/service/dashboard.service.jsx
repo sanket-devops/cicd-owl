@@ -61,7 +61,6 @@ async function _saveCicd(data) {
       "data": data
     })
   })
-  console.log(data)
 }
 
 // Update CICD
