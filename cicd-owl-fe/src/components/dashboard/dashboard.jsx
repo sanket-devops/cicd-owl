@@ -536,7 +536,7 @@ function Dashboard() {
                                 </div>
                                 <div className="flex-auto">
                                     <span className="p-float-label">
-                                        <Dropdown value={newStage.remoteHost} onChange={(e) => stageHostChange(e, 'selectedHost')} options={host} optionLabel="hostName" placeholder="Host Name" className="w-full md:w-14rem" />
+                                        <Dropdown value={newStage.remoteHost} onChange={(e) => stageHostChange(e, 'remoteHost')} options={host} optionLabel="hostName" placeholder="Host Name" className="w-full md:w-14rem" />
                                         <label htmlFor="Host Name">Host Name</label>
                                     </span>
                                 </div>
