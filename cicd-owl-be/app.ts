@@ -1,12 +1,12 @@
 import { Iuser } from "./interfaces/Iuser";
 import Fastify from "fastify";
-import cors from '@fastify/cors'
+import cors from "@fastify/cors";
 import mongoose from "mongoose";
 
 const fastify = Fastify();
-fastify.register(cors, { 
+fastify.register(cors, {
   // put your options here
-})
+});
 const hostname = "0.0.0.0";
 const port = 8888;
 const app = fastify;
@@ -33,8 +33,9 @@ app.get("/", (req, res) => {
 });
 
 const makeToken = (length: number) => {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const charactersLength = characters.length;
   let counter = 0;
   while (counter < length) {
@@ -42,11 +43,11 @@ const makeToken = (length: number) => {
     counter += 1;
   }
   return result;
-}
+};
 let token: any = makeToken(48);
 
-setInterval(()=>{
-  token = makeToken(48)
+setInterval(() => {
+  token = makeToken(48);
   // console.log(token)
 }, 60000 * 1440);
 
@@ -176,12 +177,12 @@ app.post("/users/login/token", async (req: any, res) => {
     // console.log(req.body.data)
     let userToken = JSON.parse(JSON.stringify(req.body.data));
     if (userToken === token) {
-      console.log(token)
-      res.send({"token": "Token Validate"})
+      console.log(token);
+      res.send({ token: "Token Validate" });
     } else {
-      console.log(token)
+      console.log(token);
       res.status(401);
-      res.send({"token": "Token Invalidate..."});
+      res.send({ token: "Token Invalidate..." });
     }
   } catch (e) {
     console.log(e);
@@ -196,18 +197,23 @@ app.post("/users/login", async (req: any, res) => {
     // let tempData = JSON.parse(getDecryptedData(req.body.data));
     // console.log(req.body.data)
     let postData = JSON.parse(JSON.stringify(req.body.data));
-    let userData = await userModel.userData.findOne({ userName: postData.userName });
+    let userData = await userModel.userData.findOne({
+      userName: postData.userName,
+    });
     if (await userData) {
       // console.log(await userData)
-      if ((postData.userName === userData.userName) && (postData.userPass === userData.userPass)) {
-        res.send({"token": token});
+      if (
+        postData.userName === userData.userName &&
+        postData.userPass === userData.userPass
+      ) {
+        res.send({ token: token });
       } else {
         res.status(401);
-        res.send({"error": "Incorrect password check your password..."});
+        res.send({ error: "Incorrect password check your password..." });
       }
     } else {
       res.status(401);
-      res.send({"error": "User Not Found..."});
+      res.send({ error: "User Not Found..." });
     }
   } catch (e) {
     console.log(e);
@@ -275,60 +281,108 @@ app.post("/hosts/host-delete", async (req: any, res) => {
   }
 });
 
-//POST Login User
-// app.post("/users/login", async (req: any, res) => {
-//   try {
-//     // let tempData = JSON.parse(getDecryptedData(req.body.data));
-//     // console.log(req.body.data)
-//     let postData = JSON.parse(JSON.stringify(req.body.data));
-//     let userData = await userModel.userData.findOne({ userName: postData.userName });
-//     if (await userData) {
-//       // console.log(await userData)
-//       if ((postData.userName === userData.userName) && (postData.userPass === userData.userPass)) {
-//         res.send({"token": token});
-//       } else {
-//         res.status(401);
-//         res.send({"error": "Incorrect password check your password..."});
-//       }
-//     } else {
-//       res.status(401);
-//       res.send({"error": "User Not Found..."});
-//     }
-//   } catch (e) {
-//     console.log(e);
-//     res.status(500);
-//     res.send({ message: e.message });
-//   }
-// });
-
 /////////////////////////////////////////////////////////////////////
 
-async function ssh(host: string, user: string, pass: string, command: any) {
+async function ssh(
+  stageName: string,
+  host: string,
+  port: number,
+  user: string,
+  pass: string,
+  baseDir: string,
+  command: any,
+  id?: any
+) {
   let output: any = [];
+  let outputCode: number = -1;
 
-  var SSH = require("simple-ssh");
+  const { Client } = require("ssh2");
+  const conn = new Client();
 
-  var ssh = new SSH({
-    host: host,
-    user: user,
-    pass: pass,
-    baseDir: "/",
-  });
   let resDataPromiseArr: any = [];
   resDataPromiseArr.push(
     new Promise(async (resolve: any, reject: any) => {
-      ssh
-        .exec(command, {
-          out: function (stdout: any) {
-            output.push(stdout);
-            resolve();
-          },
+      conn
+        .on("ready", () => {
+          console.log("Client :: ready");
+          conn.exec(command, async (err: any, stream: any) => {
+            if (err) throw err;
+            stream
+              .on("close", async (code: any, signal: any) => {
+                console.log(
+                  "Stream :: close :: code: " +
+                    (await code) +
+                    ", signal: " +
+                    (await signal)
+                );
+                outputCode = await code;
+                conn.end();
+                resolve();
+              })
+              .on("data", async (data: any) => {
+                // console.log('STDOUT: ' + data);
+                output.push(await data);
+              })
+              .stderr.on("data", async (data: any) => {
+                // console.log('STDERR: ' + data);
+                output.push(await data);
+              });
+          });
         })
-        .start();
+        .connect({
+          host: host,
+          port: port,
+          username: user,
+          password: pass,
+        });
     })
   );
   await Promise.all(resDataPromiseArr);
-  return output;
+  async function cicdOutput() {
+    let resOutput: any = undefined;
+    let resDataPromiseArr1: any = [];
+    resDataPromiseArr1.push(
+      new Promise(async (resolve: any, reject: any) => {
+        if (id) {
+          let cicd = await cicdModel.cicdData.findOne({ _id: id });
+          console.log(cicd.cicdStagesOutput.length + 1);
+          let buildNumber = cicd.cicdStagesOutput.length + 1;
+          let _cicdStageOutput: any = {
+            buildNumber: buildNumber,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: "success",
+            cicdStageOutput: [],
+          };
+
+          let _stageLogs: any = {
+            stageName: stageName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: "success",
+            logs: [],
+          };
+          _stageLogs.logs.push(
+            await JSON.parse(JSON.stringify("" + output[0]))
+          );
+          _cicdStageOutput.cicdStageOutput.push(_stageLogs);
+
+          console.log(_cicdStageOutput);
+          // console.log(await JSON.parse(JSON.stringify('' + output[0])));
+          resOutput = _cicdStageOutput;
+          resolve();
+          // await cicdModel.cicdData.findByIdAndUpdate({_id: id}, {$push: {cicdStagesOutput: output}});
+        } else {
+        }
+      })
+    );
+    await Promise.all(resDataPromiseArr1);
+    return await resOutput;
+  }
+
+  // console.log(outputCode)
+
+  return await cicdOutput();
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -336,20 +390,46 @@ async function ssh(host: string, user: string, pass: string, command: any) {
 //POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {
   try {
-    // let tempData = JSON.parse(getDecryptedData(req.body.data));
-    // console.log(req.body.data)
-    // let tempData = JSON.parse(JSON.stringify(req.body.data));
-    // let saved = await userModel.userData.create(tempData);
-    let tempData = JSON.parse(JSON.stringify(req.body));
-    let output = await ssh(tempData.host, tempData.user, tempData.pass, tempData.command);
-    console.log(output[0])
-    res.send(output[0]);
+    let body = JSON.parse(JSON.stringify(req.body));
+    let output = await ssh(
+      body.stageName,
+      body.host,
+      body.port,
+      body.user,
+      body.pass,
+      body.baseDir,
+      body.command,
+      body.id
+    );
+    console.log(output);
+    res.send(output);
   } catch (e) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
   }
 });
-// ssh("192.168.120.135", "owlsnest", "Tsen$2021%slwo", "cat /etc/os-release");
+
+//POST Connect SSH and store output in cicdStagesOutput using _id
+// app.post("/connect/ssh", async (req: any, res) => {
+//   try {
+//     let body = JSON.parse(JSON.stringify(req.body));
+//     let output = await ssh(
+//       body.host,
+//       body.port,
+//       body.user,
+//       body.pass,
+//       body.baseDir,
+//       body.command,
+//       body.id
+//     );
+//     console.log(output);
+//     res.send(output);
+//   } catch (e) {
+//     console.log(e);
+//     res.status(500);
+//     res.send({ message: e.message });
+//   }
+// });
 
 /////////////////////////////////////////////////////////////////////
