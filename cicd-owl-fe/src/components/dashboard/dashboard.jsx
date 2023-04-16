@@ -194,14 +194,13 @@ function Dashboard() {
 
     const editStageItem = (rowData) => {
         setNewStage(rowData)
-        console.log(host)
+        // console.log(host)
         setStageDialog(true)
         setSubmitted(false);
     };
 
     const deleteSelectedCicds = () => {
         let _cicd = cicds.filter((val) => !selectedCicds.includes(val));
-
         setCicds(_cicd);
         setDeleteCicdsDialog(false);
         setSelectedCicds(null);
@@ -240,7 +239,6 @@ function Dashboard() {
                 console.log(cicd)
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Stage Updated', life: 3000 });
             } else {
-                cicd.cicdStages.push(newStage)
                 stage.push(newStage)
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Stage Saved', life: 3000 });
             }

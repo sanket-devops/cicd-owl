@@ -6,7 +6,7 @@ const CicdSchema = new Schema({
     itemName: String,
     status: String,
     cicdStages: [{stageName: String, remoteHost: String, command: String}],
-    cicdStagesOutput: [{buildNumber: Number, startTime: String, endTime: String, status: String, cicdStage: [{stageName: String, startTime: String, endTime: String, status: String, logs:[]}]}]
+    cicdStagesOutput: [{buildNumber: Number, startTime: String, endTime: String, status: String, cicdStageOutput: [{stageName: String, startTime: String, endTime: String, status: String, logs:[]}]}]
 }, {
     // http://mongoosejs.com/docs/guide.html#timestamps
     timestamps: true

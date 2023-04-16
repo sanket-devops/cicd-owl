@@ -283,28 +283,79 @@ app.post("/hosts/host-delete", async (req: any, res) => {
 
 /////////////////////////////////////////////////////////////////////
 
-async function ssh(
-  stageName: string,
-  host: string,
-  port: number,
-  user: string,
-  pass: string,
-  baseDir: string,
-  command: any,
-  id?: any
-) {
+async function ssh(cicdStages: any, baseDir: string, id: any) {
+  let stageData: any = undefined;
+  let cicd = await cicdModel.cicdData.findOne({ _id: id });
+  let buildNumber = cicd.cicdStagesOutput.length + 1;
+  let _cicdStageOutput: any = {
+    buildNumber: buildNumber,
+    startTime: Date.now(),
+    endTime: Date.now(),
+    status: "success",
+    cicdStageOutput: [],
+  };
+  let resDataPromiseArr1: any = [];
+  resDataPromiseArr1.push(
+    new Promise(async (resolve: any, reject: any) => {
+      cicdStages.forEach(async (element: any) => {
+        let host = await hostModel.hostData.findOne({
+          hostName: element.remoteHost,
+        });
+        let output = await sshConnect(await host, await element.command);
+        // console.log(await output);
+        let _stageLogs: any = {
+          stageName: element.stageName,
+          startTime: Date.now(),
+          endTime: Date.now(),
+          status: "success",
+          logs: [],
+        };
+        let resDataPromiseArr: any = [];
+        resDataPromiseArr.push(
+          new Promise(async (resolve: any, reject: any) => {
+            _stageLogs.logs.push(
+              await JSON.parse(JSON.stringify("" + (await output)))
+            );
+            _cicdStageOutput.cicdStageOutput.push(_stageLogs);
+
+            // console.log(_cicdStageOutput);
+            stageData = await _cicdStageOutput;
+            // console.log(stageData);
+            // await cicdModel.cicdData.findByIdAndUpdate(
+            //   { _id: id },
+            //   { $push: { cicdStagesOutput: _cicdStageOutput } }
+            // );
+            resolve(await _cicdStageOutput);
+          })
+        );
+        await Promise.all(resDataPromiseArr).then((value) => {
+          // console.log(value)
+          stageData = value;
+          resolve(stageData);
+        });
+      });
+      
+    })
+  );
+  await Promise.all(resDataPromiseArr1).then((value) => {
+    console.log(stageData);
+    // stageData = value;
+  });
+  return stageData;
+}
+
+async function sshConnect(host: any, command: string) {
   let output: any = [];
   let outputCode: number = -1;
-
   const { Client } = require("ssh2");
   const conn = new Client();
-
   let resDataPromiseArr: any = [];
   resDataPromiseArr.push(
     new Promise(async (resolve: any, reject: any) => {
       conn
-        .on("ready", () => {
+        .on("ready", async () => {
           console.log("Client :: ready");
+
           conn.exec(command, async (err: any, stream: any) => {
             if (err) throw err;
             stream
@@ -330,59 +381,16 @@ async function ssh(
           });
         })
         .connect({
-          host: host,
-          port: port,
-          username: user,
-          password: pass,
+          host: host.hostAdd,
+          port: 22,
+          username: host.hostUser,
+          password: host.hostPass,
         });
     })
   );
   await Promise.all(resDataPromiseArr);
-  async function cicdOutput() {
-    let resOutput: any = undefined;
-    let resDataPromiseArr1: any = [];
-    resDataPromiseArr1.push(
-      new Promise(async (resolve: any, reject: any) => {
-        if (id) {
-          let cicd = await cicdModel.cicdData.findOne({ _id: id });
-          console.log(cicd.cicdStagesOutput.length + 1);
-          let buildNumber = cicd.cicdStagesOutput.length + 1;
-          let _cicdStageOutput: any = {
-            buildNumber: buildNumber,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: "success",
-            cicdStageOutput: [],
-          };
-
-          let _stageLogs: any = {
-            stageName: stageName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: "success",
-            logs: [],
-          };
-          _stageLogs.logs.push(
-            await JSON.parse(JSON.stringify("" + output[0]))
-          );
-          _cicdStageOutput.cicdStageOutput.push(_stageLogs);
-
-          console.log(_cicdStageOutput);
-          // console.log(await JSON.parse(JSON.stringify('' + output[0])));
-          resOutput = _cicdStageOutput;
-          resolve();
-          // await cicdModel.cicdData.findByIdAndUpdate({_id: id}, {$push: {cicdStagesOutput: output}});
-        } else {
-        }
-      })
-    );
-    await Promise.all(resDataPromiseArr1);
-    return await resOutput;
-  }
-
-  // console.log(outputCode)
-
-  return await cicdOutput();
+  // console.log(await output)
+  return await output;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -391,17 +399,8 @@ async function ssh(
 app.post("/connect/ssh", async (req: any, res) => {
   try {
     let body = JSON.parse(JSON.stringify(req.body));
-    let output = await ssh(
-      body.stageName,
-      body.host,
-      body.port,
-      body.user,
-      body.pass,
-      body.baseDir,
-      body.command,
-      body.id
-    );
-    console.log(output);
+    let output = await ssh(body.cicdStages, body.baseDir, body.id);
+    // console.log(output);
     res.send(output);
   } catch (e) {
     console.log(e);
