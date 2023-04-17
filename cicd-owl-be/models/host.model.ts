@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 const HostSchema = new Schema({
     hostName: String,
     hostAdd: String,
+    hostPort: Number,
     hostUser: String,
     hostPass: String,
     hostWorkDir: String,

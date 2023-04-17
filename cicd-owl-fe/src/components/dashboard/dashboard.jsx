@@ -112,10 +112,11 @@ function Dashboard() {
     };
 
     let openCicd = (cicdShow) => {
-        if (cicdShow.cicdStagesOutput[0]) {
-            setShowCicdData([cicdShow.cicdStagesOutput[0]]);
-            setSubmitted(false);
-            setShowCicdDialog(true);
+        if (cicdShow.cicdStagesOutput) {
+            navigate("/cicd");
+            // setShowCicdData(cicdShow.cicdStagesOutput);
+            // setSubmitted(false);
+            // setShowCicdDialog(true);
         }
     };
 
@@ -584,17 +585,18 @@ function Dashboard() {
                     </div>
                 </Dialog>
 
-                <Dialog visible={showCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}>
+                <Dialog visible={showCicdDialog} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}>
                     <div>
                         <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
                             dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
                             <Column selectionMode="single" exportable={false}></Column>
-                            <Column field="buildNumber" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                            <Column field="buildNumber" header="Build No." sortable style={{ minWidth: '5rem' }}></Column>
+                            {/* <Column field="buildNumber" header="Name" sortable style={{ minWidth: '16rem' }}></Column> */}
                             <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
-                            <Column field={updated} header="Updated" sortable></Column>
-                            <Column field={created} header="Created" sortable></Column>
+                            <Column field={startTime} header="Start" sortable></Column>
+                            <Column field={endTime} header="End" sortable></Column>
                             <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
                         </DataTable>
                     </div>

@@ -287,60 +287,49 @@ async function ssh(cicdStages: any, baseDir: string, id: any) {
   let stageData: any = undefined;
   let cicd = await cicdModel.cicdData.findOne({ _id: id });
   let buildNumber = cicd.cicdStagesOutput.length + 1;
+
   let _cicdStageOutput: any = {
     buildNumber: buildNumber,
-    startTime: Date.now(),
-    endTime: Date.now(),
+    startTime: new Date(),
+    endTime: new Date(),
     status: "success",
     cicdStageOutput: [],
   };
-  let resDataPromiseArr1: any = [];
-  resDataPromiseArr1.push(
-    new Promise(async (resolve: any, reject: any) => {
-      cicdStages.forEach(async (element: any) => {
-        let host = await hostModel.hostData.findOne({
-          hostName: element.remoteHost,
-        });
-        let output = await sshConnect(await host, await element.command);
-        // console.log(await output);
-        let _stageLogs: any = {
-          stageName: element.stageName,
-          startTime: Date.now(),
-          endTime: Date.now(),
-          status: "success",
-          logs: [],
-        };
-        let resDataPromiseArr: any = [];
-        resDataPromiseArr.push(
-          new Promise(async (resolve: any, reject: any) => {
-            _stageLogs.logs.push(
-              await JSON.parse(JSON.stringify("" + (await output)))
-            );
-            _cicdStageOutput.cicdStageOutput.push(_stageLogs);
 
-            // console.log(_cicdStageOutput);
-            stageData = await _cicdStageOutput;
-            // console.log(stageData);
-            // await cicdModel.cicdData.findByIdAndUpdate(
-            //   { _id: id },
-            //   { $push: { cicdStagesOutput: _cicdStageOutput } }
-            // );
-            resolve(await _cicdStageOutput);
-          })
+  for (const stage of cicdStages) {
+    let _stageLogs: any = {
+      stageName: stage.stageName,
+      startTime: Date.now(),
+      endTime: Date.now(),
+      status: "success",
+      logs: [],
+    };
+    let host = await hostModel.hostData.findOne({
+      hostName: stage.remoteHost,
+    });
+    let output = await sshConnect(await host, await stage.command);
+    let resDataPromiseArr: any = [];
+    resDataPromiseArr.push(
+      new Promise(async (resolve: any, reject: any) => {
+        _stageLogs.logs.push(
+          await JSON.parse(JSON.stringify("" + (await output)))
         );
-        await Promise.all(resDataPromiseArr).then((value) => {
-          // console.log(value)
-          stageData = value;
-          resolve(stageData);
-        });
-      });
-      
-    })
+        _stageLogs.endTime = Date.now();
+
+        _cicdStageOutput.cicdStageOutput.push(_stageLogs);
+        _cicdStageOutput.endTime = new Date();
+
+        stageData = await _cicdStageOutput;
+        resolve();
+      })
+    );
+    await Promise.all(resDataPromiseArr);
+  }
+
+  await cicdModel.cicdData.findByIdAndUpdate(
+    { _id: id },
+    { $push: { cicdStagesOutput: await stageData } }
   );
-  await Promise.all(resDataPromiseArr1).then((value) => {
-    console.log(stageData);
-    // stageData = value;
-  });
   return stageData;
 }
 
@@ -382,7 +371,7 @@ async function sshConnect(host: any, command: string) {
         })
         .connect({
           host: host.hostAdd,
-          port: 22,
+          port: host.hostPort,
           username: host.hostUser,
           password: host.hostPass,
         });
