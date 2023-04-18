@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './dashboard.css'
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate, Link } from "react-router-dom";
 import { classNames } from 'primereact/utils';
 import { DataTable } from 'primereact/datatable';
 import { Toolbar } from 'primereact/toolbar';
@@ -15,6 +15,7 @@ import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
+import Cicd from './cicd/cicd';
 
 
 function Dashboard() {
@@ -113,8 +114,10 @@ function Dashboard() {
 
     let openCicd = (cicdShow) => {
         if (cicdShow.cicdStagesOutput) {
-            navigate("/cicd");
+            // console.log(cicdStagesOutput)
+            // Cicd.loadDataCicd(cicdShow.cicdStagesOutput)
             // setShowCicdData(cicdShow.cicdStagesOutput);
+            navigate("/cicd", {state: cicdShow});
             // setSubmitted(false);
             // setShowCicdDialog(true);
         }
