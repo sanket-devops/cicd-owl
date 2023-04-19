@@ -14,7 +14,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
+import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 import Cicd from './cicd/cicd';
 
 
@@ -112,14 +112,9 @@ function Dashboard() {
         setHostDialog(true);
     };
 
-    let openCicd = (cicdShow) => {
+    let openCicd = async (cicdShow) => {
         if (cicdShow.cicdStagesOutput) {
-            // console.log(cicdStagesOutput)
-            // Cicd.loadDataCicd(cicdShow.cicdStagesOutput)
-            // setShowCicdData(cicdShow.cicdStagesOutput);
             navigate("/cicd", {state: cicdShow});
-            // setSubmitted(false);
-            // setShowCicdDialog(true);
         }
     };
 
@@ -194,6 +189,16 @@ function Dashboard() {
         setStage(rowData.cicdStages)
         setCicdDialog(true)
         setSubmitted(false);
+    };
+
+    const runCicd = async (rowData) => {
+        let body = {
+            "id": rowData._id,
+            "baseDir": "/tmp",
+            "cicdStages": rowData.cicdStages
+        }
+        await _runCicd(body)
+        await loadData();
     };
 
     const editStageItem = (rowData) => {
@@ -363,7 +368,7 @@ function Dashboard() {
     const actionBodyTemplate = (rowData) => {
         return (
             <React.Fragment>
-                <Button icon="pi pi-play" rounded outlined className="mr-2" />
+                <Button icon="pi pi-play" rounded outlined className="mr-2" onClick={(e) => runCicd(rowData)} />
                 <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={(e) => editCicdItem(rowData)} />
                 <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={(e) => deleteCicdItem(rowData)} />
             </React.Fragment>

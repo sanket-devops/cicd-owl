@@ -387,7 +387,7 @@ async function sshConnect(host: any, command: string) {
 // POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {
   try {
-    let body = JSON.parse(JSON.stringify(req.body));
+    let body = JSON.parse(JSON.stringify(req.body.data));
     let output = await ssh(body.cicdStages, body.baseDir, body.id);
     // console.log(output);
     res.send(output);
@@ -401,7 +401,7 @@ app.post("/connect/ssh", async (req: any, res) => {
 // POST Connect SSH and store output in cicdStagesOutput using _id
 app.post("/connect/ssh/test", async (req: any, res) => {
   try {
-    let body = JSON.parse(JSON.stringify(req.body));
+    let body = JSON.parse(JSON.stringify(req.body.data));
     let host = await hostModel.hostData.findOne({
       hostName: body.remoteHost,
     });
@@ -410,7 +410,6 @@ app.post("/connect/ssh/test", async (req: any, res) => {
       body.command,
     );
     // console.log(output);
-    // var buffer = Buffer.from(output);
     res.send(await JSON.parse(JSON.stringify("" + (await output))));
   } catch (e) {
     console.log(e);

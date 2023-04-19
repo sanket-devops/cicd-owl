@@ -92,6 +92,21 @@ async function _deleteCicd(data) {
   })
 }
 
+// Run CICD
+async function _runCicd(body) {
+  // console.log(body)
+  return await fetch(API_ENDPOINT + '/connect/ssh', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": body
+    })
+  })
+}
+
 // Get All HOSTS
 async function _getAllHost() {
   let data = undefined;
@@ -130,5 +145,5 @@ async function _deleteHost(data) {
   })
 }
 
-export { userLogin, _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _getAllHost, _updateHost, _deleteHost };
+export { userLogin, _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _getAllHost, _updateHost, _deleteHost };
 

@@ -94,73 +94,44 @@ export default function Cicd(props) {
 
     const loadStage = () => {
         // console.log(cicdStageData)
-
-        for (let stages = 0; stages < cicdStagesData.length; stages++) {
-            let stagesData = cicdStagesData;
-            // console.log(cicdStagesData)
-            for (let stage = 0; stage < cicdStagesData[stages].cicdStageOutput.length; stage++) {
-                let stageData = cicdStagesData[stages].cicdStageOutput;
-                // console.log(cicdStagesData[stages].cicdStageOutput);
-                return (
-                    <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
-                        {stagesData.map((stagesObj) => (
-                            <div key={stagesObj._id} className="flex align-items-center gap-2">
-                                {stagesObj.buildNumber}
-                                {stageData.map((stageObj) => (
+        // for (let stages = 0; stages < cicdStagesData.length; stages++) {
+        // console.log(cicdStagesData)
+        // for (let stage = 0; stage < cicdStagesData[stages].cicdStageOutput.length; stage++) {
+        // let stageData = cicdStagesData[stages].cicdStageOutput;
+        // console.log(cicdStagesData[stages].cicdStageOutput);
+        return (
+            <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
+                {cicdStagesData.map((stagesObj) => (
+                    <div key={stagesObj._id} className="flex align-items-center gap-2">
+                        {stagesObj.buildNumber}
+                        {/* {stagesObj.cicdStageOutput.map((stageObj) => (
                                     <div key={stageObj._id} className="p-2 border-1 surface-border surface-card border-round">
                                         {stageObj.stageName}
                                         <Button icon="pi" className="p-7 flex align-items-center" ></Button>
                                     </div>
                                 )
-                                )}
-                                
-                            </div>
-                        ))}
-                        
+                                )} */}
                     </div>
-                )
-            }
-        }
+                ))}
+            </div>
+        )
+        // }
+        // }
     }
 
-    const listItem = (cicd, stageData) => {
+    const listItem = (cicdStagesData) => {
         return (
             <div className="col-12">
-                {loadStage()}
-            </div>
-        );
-    };
-
-    const gridItem = (cicd, stageData) => {
-        return (
-            <div>
-
-                <div className="col-12 sm:col-6 lg:col-12 xl:col-4 p-2">
-                    <div className="p-4 border-1 surface-border surface-card border-round">
-                        <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-                            <div className="flex align-items-center gap-2">
-                                <i className="pi pi-tag"></i>
-                                <span className="font-semibold">{cicd.buildNumber}</span>
+                <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
+                    <div key={cicdStagesData._id} className="flex align-items-center gap-2">
+                        {cicdStagesData.buildNumber}
+                        {cicdStagesData.cicdStageOutput.map((stageObj) => (
+                            <div key={stageObj._id} className="p-2 border-1 surface-border surface-card border-round">
+                                {stageObj.stageName}
+                                <Button icon="pi" className="p-7 flex align-items-center" ></Button>
                             </div>
-                            <Tag value={cicd.status} severity={getSeverity(cicd)}></Tag>
-                        </div>
-                        <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-                            <div className="flex align-items-center gap-2">
-                                <i className="pi pi-tag"></i>
-                                {/* <span className="font-semibold">{cicd.cicdStagesOutput.stageName}</span> */}
-
-                            </div>
-                            <Tag value={stageData.status} severity={getSeverity(stageData)}></Tag>
-                        </div>
-                        {/* <div className="flex flex-column align-items-center gap-3 py-5">
-                        <img className="w-9 shadow-2 border-round" src={`https://primefaces.org/cdn/primereact/images/product/${product.image}`} alt={product.name} />
-                        <div className="text-2xl font-bold">{product.name}</div>
-                        <Rating value={product.rating} readOnly cancel={false}></Rating>
-                    </div>
-                    <div className="flex align-items-center justify-content-between">
-                        <span className="text-2xl font-semibold">${product.price}</span>
-                        <Button icon="pi pi-shopping-cart" className="p-button-rounded" disabled={product.inventoryStatus === 'OUTOFSTOCK'}></Button>
-                    </div> */}
+                        )
+                        )}
                     </div>
                 </div>
             </div>
@@ -204,21 +175,21 @@ export default function Cicd(props) {
         );
     };
 
-    const itemTemplate = (cicdStagesData, layout) => {
-        if (!cicdStagesData) {
-            return;
-        }
-        else if (layout === 'grid') return gridItem(cicdStagesData, cicdStageData);
-        if (layout === 'list') return listItem(cicdStagesData, cicdStageData);
-    };
+    // const itemTemplate = (cicdStagesData, layout) => {
+    //     if (!cicdStagesData) {
+    //         return;
+    //     }
+    //     // else if (layout === 'grid') return gridItem(cicdStagesData, cicdStageData);
+    //     if (layout === 'list') return listItem();
+    // };
 
-    const header = () => {
-        return (
-            <div className="flex justify-content-end">
-                <DataViewLayoutOptions layout={layout} onChange={(e) => setLayout(e.value)} />
-            </div>
-        );
-    };
+    // const header = () => {
+    //     return (
+    //         <div className="flex justify-content-end">
+    //             <DataViewLayoutOptions layout={layout} onChange={(e) => setLayout(e.value)} />
+    //         </div>
+    //     );
+    // };
 
     const statusBodyTemplate = (rowData) => {
         return <Tag value={rowData.status} severity={getSeverity(rowData)}></Tag>;
@@ -239,7 +210,8 @@ export default function Cicd(props) {
         <div className="card">
             <Toast ref={toast} />
             <Toolbar className="mb-4" left={leftToolbarTemplate}></Toolbar>
-            <DataView value={cicdStagesData} itemTemplate={itemTemplate} layout={layout} header={header()} />
+            <DataView value={cicdStagesData} itemTemplate={listItem} layout={layout} />
+
             {/* <div> */}
             {/* <DataTable value={cicdStagesData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
                     dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
