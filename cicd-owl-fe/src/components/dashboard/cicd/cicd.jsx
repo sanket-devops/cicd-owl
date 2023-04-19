@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import './cicd.css'
-import { CicdService } from '../../../service/cicd.service';
 import { Button } from 'primereact/button';
 import { DataView, DataViewLayoutOptions } from 'primereact/dataview';
 import { Toolbar } from 'primereact/toolbar';
@@ -31,10 +30,10 @@ export default function Cicd(props) {
         setCicdStagesData(location.state.cicdStagesOutput)
         let _stageData = [];
         for (const stages of cicdStagesData) {
-            _stageData.push({ "stage": stages.cicdStageOutput })
+            _stageData.push(stages.cicdStageOutput)
         }
         setCicdStageData(_stageData)
-        console.log(cicdStageData)
+        // console.log(cicdStageData)
 
     };
 
@@ -96,63 +95,38 @@ export default function Cicd(props) {
     const loadStage = () => {
         // console.log(cicdStageData)
 
-        for (let id = 0; id < cicdStagesData.length; id++) {
-            console.log(cicdStagesData[id])
-            
-        }
-
-        for (const stages of cicdStagesData) {
-            for (const stage of stages.cicdStageOutput) {
-                // console.log(stages[])
-                // return (
-                //     <div className="flex align-items-center gap-2">
-                //         <div className="p-4 border-1 surface-border surface-card border-round">
-                //             <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-                //                 <div className="flex align-items-center gap-2">{stage.stageName}
+        for (let stages = 0; stages < cicdStagesData.length; stages++) {
+            let stagesData = cicdStagesData;
+            // console.log(cicdStagesData)
+            for (let stage = 0; stage < cicdStagesData[stages].cicdStageOutput.length; stage++) {
+                let stageData = cicdStagesData[stages].cicdStageOutput;
+                // console.log(cicdStagesData[stages].cicdStageOutput);
+                return (
+                    <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
+                        {stagesData.map((stagesObj) => (
+                            <div key={stagesObj._id} className="flex align-items-center gap-2">
+                                {stagesObj.buildNumber}
+                                {stageData.map((stageObj) => (
+                                    <div key={stageObj._id} className="p-2 border-1 surface-border surface-card border-round">
+                                        {stageObj.stageName}
+                                        <Button icon="pi" className="p-7 flex align-items-center" ></Button>
+                                    </div>
+                                )
+                                )}
                                 
-                //                 </div>
-                //             </div>
-                //         </div>
-                //         <div className="p-4 border-1 surface-border surface-card border-round">
-                //             <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-                //                 <div className="flex align-items-center gap-2">{stage.status}
-                //                 </div>
-                //             </div>
-                //         </div>
-                //     </div>
-                // )
+                            </div>
+                        ))}
+                        
+                    </div>
+                )
             }
-
         }
-
     }
 
     const listItem = (cicd, stageData) => {
         return (
             <div className="col-12">
-                <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
-                    {/* <img className="w-9 sm:w-16rem xl:w-10rem shadow-2 block xl:block mx-auto border-round" src={`https://primefaces.org/cdn/primereact/images/product/${product.image}`} alt={product.name} /> */}
-                    <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4">
-                        <div className="flex flex-column align-items-center sm:align-items-start gap-3">
-                            <div className="text-2xl font-bold text-900">{cicd.buildNumber}
-                                <div className="flex align-items-center gap-3">
-                                    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-                                        <div className="flex align-items-center gap-2">
-                                            {/* {loadStage()} */}
-
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                        <div className="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
-                            {/* <span className="text-2xl font-semibold">${cicd.endTime}</span> */}
-                            {/* <Button icon="pi pi-shopping-cart" className="p-button-rounded" disabled={cicd.inventoryStatus === 'OUTOFSTOCK'}></Button> */}
-                        </div>
-                    </div>
-                </div>
+                {loadStage()}
             </div>
         );
     };
