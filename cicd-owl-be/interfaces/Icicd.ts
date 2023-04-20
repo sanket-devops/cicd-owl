@@ -17,7 +17,7 @@ export interface IcicdStagesOutput {
   startTime: string;
   endTime: string;
   status: string;
-  cicdStageOutput: IcicdStageOutput[]
+  cicdStageOutput: IcicdStageOutput[];
 }
 
 export interface IcicdStageOutput {
@@ -25,5 +25,6 @@ export interface IcicdStageOutput {
   startTime: string;
   endTime: string;
   status: string;
-  logs:[]
+  code: number;
+  logs:[];
 }

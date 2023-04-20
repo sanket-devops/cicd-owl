@@ -283,7 +283,7 @@ app.post("/hosts/host-delete", async (req: any, res) => {
 
 /////////////////////////////////////////////////////////////////////
 
-async function ssh(cicdStages: any, baseDir: string, id: any) {
+async function ssh(cicdStages: any, id: any) {
   let stageData: any = undefined;
   let cicd = await cicdModel.cicdData.findOne({ _id: id });
   let buildNumber = cicd.cicdStagesOutput.length + 1;
@@ -292,7 +292,7 @@ async function ssh(cicdStages: any, baseDir: string, id: any) {
     buildNumber: buildNumber,
     startTime: new Date(),
     endTime: new Date(),
-    status: "success",
+    status: "running",
     cicdStageOutput: [],
   };
 
@@ -300,32 +300,46 @@ async function ssh(cicdStages: any, baseDir: string, id: any) {
     let _stageLogs: any = {
       stageName: stage.stageName,
       startTime: Date.now(),
-      endTime: Date.now(),
-      status: "success",
+      endTime: null,
+      status: "running",
+      code: null,
       logs: [],
     };
     let host = await hostModel.hostData.findOne({
       hostName: stage.remoteHost,
     });
-    let output = await sshConnect(await host, await stage.command);
+    let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/${await cicd.itemName} && cd ${await host.hostPath}/cicd-owl/${await cicd.itemName}`;
+    let sshCommand = _cicdHostPath + " && " + stage.command;
+    console.log(sshCommand);
+    let output = await sshConnect(await host, sshCommand);
     let resDataPromiseArr: any = [];
     resDataPromiseArr.push(
       new Promise(async (resolve: any, reject: any) => {
         _stageLogs.logs.push(
-          await JSON.parse(JSON.stringify("" + (await output)))
+          await JSON.parse(JSON.stringify("" + output.output))
+          // await output.output
         );
+        _stageLogs.code = output.code;
+        if (output.code === 0) {
+          _stageLogs.status = "success";
+          _cicdStageOutput.status = "success";
+        } else {
+          _stageLogs.status = "failed";
+          _cicdStageOutput.status = "failed";
+        }
         _stageLogs.endTime = Date.now();
-
         _cicdStageOutput.cicdStageOutput.push(_stageLogs);
         _cicdStageOutput.endTime = new Date();
-
         stageData = await _cicdStageOutput;
         resolve();
       })
     );
     await Promise.all(resDataPromiseArr);
   }
-
+  await cicdModel.cicdData.findByIdAndUpdate(
+    { _id: id },
+    { $set: { status: await _cicdStageOutput.status } }
+  );
   await cicdModel.cicdData.findByIdAndUpdate(
     { _id: id },
     { $push: { cicdStagesOutput: await stageData } }
@@ -378,8 +392,10 @@ async function sshConnect(host: any, command: string) {
     })
   );
   await Promise.all(resDataPromiseArr);
-  // console.log(await output)
-  return await output;
+  let resData = { output: await output, code: outputCode };
+  // console.log(await JSON.parse(JSON.stringify("" + resData.output)));
+  // console.log(resData.output);
+  return resData;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -388,8 +404,7 @@ async function sshConnect(host: any, command: string) {
 app.post("/connect/ssh", async (req: any, res) => {
   try {
     let body = JSON.parse(JSON.stringify(req.body.data));
-    let output = await ssh(body.cicdStages, body.baseDir, body.id);
-    // console.log(output);
+    let output = await ssh(body.cicdStages, body.id);
     res.send(output);
   } catch (e) {
     console.log(e);
@@ -405,12 +420,14 @@ app.post("/connect/ssh/test", async (req: any, res) => {
     let host = await hostModel.hostData.findOne({
       hostName: body.remoteHost,
     });
-    let output = await sshConnect(
-      host,
-      body.command,
-    );
-    // console.log(output);
-    res.send(await JSON.parse(JSON.stringify("" + (await output))));
+    let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/testTemp && cd ${await host.hostPath}/cicd-owl/testTemp`;
+    let sshCommand = _cicdHostPath + " && " + body.command;
+    console.log(sshCommand);
+    let output = await sshConnect(host, sshCommand);
+    res.send({
+      output: await JSON.parse(JSON.stringify("" + output.output)),
+      code: output.code,
+    });
   } catch (e) {
     console.log(e);
     res.status(500);

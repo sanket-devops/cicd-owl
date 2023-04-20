@@ -17,7 +17,7 @@ export default function Cicd(props) {
 
     let loadDataCicd = async () => {
         setCicd(location.state)
-        setCicdStagesData(location.state.cicdStagesOutput)
+        setCicdStagesData(location.state.cicdStagesOutput.reverse())
     };
 
     useEffect(() => {
@@ -27,7 +27,7 @@ export default function Cicd(props) {
                 let res = await validateToken(token);
                 if (res.status === 200) {
                     loadDataCicd();
-                    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
+                    // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
                 }
                 else if (res.status === 401) {
                     navigate("/login");
@@ -39,8 +39,30 @@ export default function Cicd(props) {
         }
     }, []);
 
-    const getSeverity = (cicdData) => {
-        switch (cicdData.status) {
+    const stageTime = (endTime, startTime) => {
+        let tookTime = ((endTime - startTime) / 1000)
+        if (tookTime >= 60) {
+            return (Math.floor(tookTime / 60) + 'm');
+        }
+        else if ((tookTime / 60) >= 60) {
+            return (Math.floor((tookTime / 60) / 60) + 'h');
+        }
+        else {
+            return (tookTime + 's');
+        }
+    }
+
+    const showStageLogs = (logs) => {
+        if (logs[0]) {
+            // console.log(logs);
+            let cicdWindow = window.open("", "", "toolbar=yes,scrollbars=yes,resizable=yes,top=1000,left=1000,width=1000,height=1000");
+            cicdWindow.document.write(logs[0].replace(/(?:\r\n|\r|\n)/g, '<br>'));
+        }
+
+    }
+
+    const getSeverity = (status) => {
+        switch (status) {
             case 'success':
                 return 'success';
 
@@ -67,7 +89,9 @@ export default function Cicd(props) {
                         {cicdStagesData.cicdStageOutput.map((stageObj) => (
                             <div key={stageObj._id} className="p-2 border-1 surface-border surface-card border-round">
                                 {stageObj.stageName}
-                                <Button icon="pi" className="p-7 flex align-items-center" ></Button>
+                                <Button icon="pi" className="p-5 flex align-items-center" severity={getSeverity(stageObj.status)} onClick={(e) => showStageLogs(stageObj.logs)} >
+                                    {stageTime(stageObj.endTime, stageObj.startTime)}
+                                </Button>
                             </div>
                         )
                         )}

@@ -8,7 +8,7 @@ const HostSchema = new Schema({
     hostPort: Number,
     hostUser: String,
     hostPass: String,
-    hostWorkDir: String,
+    hostPath: String,
 }, {
     // http://mongoosejs.com/docs/guide.html#timestamps
     timestamps: true
