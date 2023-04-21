@@ -4,6 +4,7 @@ import './cicd.css'
 import { Button } from 'primereact/button';
 import { DataView, DataViewLayoutOptions } from 'primereact/dataview';
 import { Toolbar } from 'primereact/toolbar';
+import { ProgressBar } from 'primereact/progressbar';
 import { Toast } from 'primereact/toast';
 import { validateToken } from '../../../service/dashboard.service';
 
@@ -13,6 +14,7 @@ export default function Cicd(props) {
     let toast = useRef(null);
     const [cicd, setCicd] = useState({});
     const [cicdStagesData, setCicdStagesData] = useState([]);
+    const [cicdProgress, setCicdProgress] = useState(0);
 
 
     let loadDataCicd = async () => {
@@ -40,7 +42,7 @@ export default function Cicd(props) {
     }, []);
 
     const stageTime = (endTime, startTime) => {
-        let tookTime = ((endTime - startTime) / 1000)
+        let tookTime = ((endTime - startTime) / 1000);
         if (tookTime >= 60) {
             return (Math.floor(tookTime / 60) + 'm');
         }
@@ -59,6 +61,15 @@ export default function Cicd(props) {
             cicdWindow.document.write(logs[0].replace(/(?:\r\n|\r|\n)/g, '<br>'));
         }
 
+    }
+    const cicdProgressBar = (endTime, startTime) => {
+        let time = ((endTime - startTime) / 1000);
+        for (let index = 0; index <= time; index++) {
+            setTimeout(() => {
+                let progressPercentage = ((index * 100)/time)
+                setCicdProgress(progressPercentage.toFixed())
+            }, 1000);
+        }
     }
 
     const getSeverity = (status) => {
@@ -83,6 +94,8 @@ export default function Cicd(props) {
     const listItem = (cicdStagesData) => {
         return (
             <div className="col-12">
+                {/* <ProgressBar value={cicdProgress}></ProgressBar> */}
+                {/* {cicdProgressBar(cicdStagesData.endTime, cicdStagesData.startTime)} */}
                 <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
                     <div key={cicdStagesData._id} className="flex align-items-center gap-2">
                         {cicdStagesData.buildNumber}

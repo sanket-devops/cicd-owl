@@ -14,7 +14,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
+import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 import Cicd from './cicd/cicd';
 
 
@@ -114,7 +114,7 @@ function Dashboard() {
 
     let openCicd = async (cicdShow) => {
         if (cicdShow.cicdStagesOutput) {
-            navigate("/cicd", {state: cicdShow});
+            navigate("/cicd", { state: cicdShow });
         }
     };
 
@@ -168,7 +168,7 @@ function Dashboard() {
                     stage.splice(index, 1)
                     toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Stage Deleted', life: 3000 });
                 }
-            } 
+            }
         } else {
             for (let index = 0; index < stage.length; index++) {
                 if (stage[index].stageName === newStage.stageName) {
@@ -194,10 +194,24 @@ function Dashboard() {
     const runCicd = async (rowData) => {
         let body = {
             "id": rowData._id,
-            "baseDir": "/tmp",
             "cicdStages": rowData.cicdStages
         }
         await _runCicd(body)
+        await loadData();
+    };
+
+    const runStage = async (rowData) => {
+        let body = {
+            "stageName": rowData.stageName,
+            "remoteHost": rowData.remoteHost,
+            "command": rowData.command
+        }
+        let _testOutput = await _runStage(body)
+        let resData = await _testOutput.json();
+        // console.log(resData)
+        let stageWindow = window.open("", "", "toolbar=yes,scrollbars=yes,resizable=yes,top=800,left=1000,width=800,height=300");
+        stageWindow.document.write(resData.output.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
         await loadData();
     };
 
@@ -378,7 +392,7 @@ function Dashboard() {
     const actionStageBodyTemplate = (rowData) => {
         return (
             <React.Fragment>
-                {/* <Button icon="pi pi-play" rounded outlined className="mr-2" /> */}
+                <Button icon="pi pi-play" rounded outlined className="mr-2" onClick={(e) => runStage(rowData)} />
                 <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={(e) => editStageItem(rowData)} />
                 <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={(e) => deleteStageItem(rowData)} />
             </React.Fragment>
@@ -487,6 +501,7 @@ function Dashboard() {
                 <Toast ref={toast} />
                 <div className="card">
                     <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
+                    <h1>CICD-Dashboard</h1>
                     <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
                         dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"

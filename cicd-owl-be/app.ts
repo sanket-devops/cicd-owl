@@ -85,11 +85,12 @@ app.post("/cicds/cicd-save", async (req: any, res) => {
 app.put("/cicds/update", async (req: any, res) => {
   try {
     // let tempData = JSON.parse(getDecryptedData(req.body.data));
-    let tempData = JSON.parse(JSON.stringify(req.body.data));
-    let id = JSON.parse(JSON.stringify(req.body.id));
+    let tempData = JSON.parse(JSON.stringify(req.body));
+    console.log(tempData)
+    // let id = JSON.parse(JSON.stringify(req.body.id));
     let post = await cicdModel.cicdData.findOneAndUpdate(
-      { _id: id },
-      tempData,
+      { _id: tempData._id },
+      {$set: {"itemName": tempData.itemName, "cicdStages": tempData.cicdStages}},
       { new: true, runValidator: true }
     );
     res.send(post);
@@ -290,8 +291,8 @@ async function ssh(cicdStages: any, id: any) {
 
   let _cicdStageOutput: any = {
     buildNumber: buildNumber,
-    startTime: new Date(),
-    endTime: new Date(),
+    startTime: Date.now(),
+    endTime: null,
     status: "running",
     cicdStageOutput: [],
   };
@@ -329,12 +330,12 @@ async function ssh(cicdStages: any, id: any) {
         }
         _stageLogs.endTime = Date.now();
         _cicdStageOutput.cicdStageOutput.push(_stageLogs);
-        _cicdStageOutput.endTime = new Date();
         stageData = await _cicdStageOutput;
         resolve();
       })
     );
     await Promise.all(resDataPromiseArr);
+    _cicdStageOutput.endTime = Date.now();
   }
   await cicdModel.cicdData.findByIdAndUpdate(
     { _id: id },
@@ -417,17 +418,24 @@ app.post("/connect/ssh", async (req: any, res) => {
 app.post("/connect/ssh/test", async (req: any, res) => {
   try {
     let body = JSON.parse(JSON.stringify(req.body.data));
-    let host = await hostModel.hostData.findOne({
-      hostName: body.remoteHost,
-    });
-    let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/testTemp && cd ${await host.hostPath}/cicd-owl/testTemp`;
-    let sshCommand = _cicdHostPath + " && " + body.command;
-    console.log(sshCommand);
-    let output = await sshConnect(host, sshCommand);
-    res.send({
-      output: await JSON.parse(JSON.stringify("" + output.output)),
-      code: output.code,
-    });
+    if (body.remoteHost) {
+      let host = await hostModel.hostData.findOne({
+        hostName: body.remoteHost,
+      });
+      let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/testTemp && cd ${await host.hostPath}/cicd-owl/testTemp`;
+      let sshCommand = _cicdHostPath + " && " + body.command;
+      console.log(sshCommand);
+      let output = await sshConnect(host, sshCommand);
+      res.send({
+        output: await JSON.parse(JSON.stringify("" + output.output)),
+        code: output.code,
+      });
+    } else {
+      res.send({
+        output: "Please select the host to run stage...",
+        code: 1,
+      });
+    }
   } catch (e) {
     console.log(e);
     res.status(500);
