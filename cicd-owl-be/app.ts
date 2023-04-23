@@ -58,9 +58,22 @@ app.get("/cicds", async (req, res) => {
   try {
     // let hosts = await owlModel.serviceHost.find({}).sort({_id:-1});
     // let hosts = await owlModel.serviceHost.find({}).select('ipAddress hostName port hostMetrics.DiskFree hostMetrics.MemFree hostMetrics.CpuUsage linkTo userName userPass groupName clusterName envName vmName note status hostCheck metricsCheck createdAt updatedAt').sort({_id:-1});
-    let cicds = await cicdModel.cicdData.find({});
+    let cicds = await cicdModel.cicdData.find({}).select('itemName status cicdStages createdAt updatedAt').sort({_id:-1});
     // res.send({data: getEncryptedData(hosts)});
     res.send({ data: cicds });
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+//GET Cicd StagesOutput By Id
+app.post("/cicds/cicd-stages", async (req: any, res) => {
+  try {
+    // console.log(JSON.parse(JSON.stringify(req.body.data)))
+    let _cicdStagesOutput = await cicdModel.cicdData.findOne({
+      _id: JSON.parse(JSON.stringify(req.body.data)),
+    }).select('cicdStagesOutput');
+    res.send(_cicdStagesOutput);
   } catch (e) {
     res.status(500);
   }

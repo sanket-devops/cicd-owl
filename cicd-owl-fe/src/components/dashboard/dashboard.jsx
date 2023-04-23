@@ -113,9 +113,9 @@ function Dashboard() {
     };
 
     let openCicd = async (cicdShow) => {
-        if (cicdShow.cicdStagesOutput) {
-            navigate("/cicd", { state: cicdShow });
-        }
+        // if (cicdShow.cicdStagesOutput) {
+        navigate("/cicd", { state: cicdShow });
+        // }
     };
 
     const hideDeleteCicdDialog = () => {

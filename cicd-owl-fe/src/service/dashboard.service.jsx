@@ -48,6 +48,20 @@ async function _getAllCicd() {
   return data
 }
 
+// GET Cicd StagesOutput By Id
+async function _cicdStagesOutputById(id) {
+  return await fetch(API_ENDPOINT + '/cicds/cicd-stages', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": id
+    })
+  })
+}
+
 // Save New CICD
 async function _saveCicd(data) {
   // console.log("Save Data: " + JSON.stringify(data));
@@ -161,5 +175,5 @@ async function _deleteHost(data) {
   })
 }
 
-export { userLogin, _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _updateHost, _deleteHost };
+export { userLogin, _getAllCicd, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _updateHost, _deleteHost };
 

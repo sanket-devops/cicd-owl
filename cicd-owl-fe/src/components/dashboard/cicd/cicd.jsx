@@ -6,7 +6,7 @@ import { DataView, DataViewLayoutOptions } from 'primereact/dataview';
 import { Toolbar } from 'primereact/toolbar';
 import { ProgressBar } from 'primereact/progressbar';
 import { Toast } from 'primereact/toast';
-import { validateToken } from '../../../service/dashboard.service';
+import { validateToken, _cicdStagesOutputById } from '../../../service/dashboard.service';
 
 export default function Cicd(props) {
     const location = useLocation();
@@ -19,7 +19,9 @@ export default function Cicd(props) {
 
     let loadDataCicd = async () => {
         setCicd(location.state)
-        setCicdStagesData(location.state.cicdStagesOutput.reverse())
+        let _cicdStagesOutput = await _cicdStagesOutputById(location.state._id);
+        let _stages = await _cicdStagesOutput.json();
+        setCicdStagesData(_stages.cicdStagesOutput.reverse())
     };
 
     useEffect(() => {
@@ -130,6 +132,7 @@ export default function Cicd(props) {
         <div className="card">
             <Toast ref={toast} />
             <Toolbar className="mb-4" left={leftToolbarTemplate}></Toolbar>
+            <h1>CICD-Stage-Dashboard</h1>
             <DataView value={cicdStagesData} itemTemplate={listItem} />
         </div>
     )
