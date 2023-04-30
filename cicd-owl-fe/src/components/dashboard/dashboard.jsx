@@ -259,11 +259,14 @@ function Dashboard() {
                         stage[index] = newStage;
                     }
                 }
-                console.log(cicd)
+                cicd.cicdStages = stage
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Stage Updated', life: 3000 });
+                // console.log(cicd)
             } else {
                 stage.push(newStage)
+                cicd.cicdStages = stage
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Stage Saved', life: 3000 });
+                // console.log(cicd)
             }
             setTimeout(() => {
                 loadData();
@@ -417,7 +420,7 @@ function Dashboard() {
                 return 'danger';
 
             default:
-                return null;
+                return 'secondary';
         }
     };
 

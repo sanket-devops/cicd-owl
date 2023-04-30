@@ -58,7 +58,10 @@ app.get("/cicds", async (req, res) => {
   try {
     // let hosts = await owlModel.serviceHost.find({}).sort({_id:-1});
     // let hosts = await owlModel.serviceHost.find({}).select('ipAddress hostName port hostMetrics.DiskFree hostMetrics.MemFree hostMetrics.CpuUsage linkTo userName userPass groupName clusterName envName vmName note status hostCheck metricsCheck createdAt updatedAt').sort({_id:-1});
-    let cicds = await cicdModel.cicdData.find({}).select('itemName status cicdStages createdAt updatedAt').sort({_id:-1});
+    let cicds = await cicdModel.cicdData
+      .find({})
+      .select("itemName status cicdStages createdAt updatedAt")
+      .sort({ _id: -1 });
     // res.send({data: getEncryptedData(hosts)});
     res.send({ data: cicds });
   } catch (e) {
@@ -70,9 +73,11 @@ app.get("/cicds", async (req, res) => {
 app.post("/cicds/cicd-stages", async (req: any, res) => {
   try {
     // console.log(JSON.parse(JSON.stringify(req.body.data)))
-    let _cicdStagesOutput = await cicdModel.cicdData.findOne({
-      _id: JSON.parse(JSON.stringify(req.body.data)),
-    }).select('cicdStagesOutput');
+    let _cicdStagesOutput = await cicdModel.cicdData
+      .findOne({
+        _id: JSON.parse(JSON.stringify(req.body.data)),
+      })
+      .select("cicdStagesOutput");
     res.send(_cicdStagesOutput);
   } catch (e) {
     res.status(500);
@@ -99,11 +104,13 @@ app.put("/cicds/update", async (req: any, res) => {
   try {
     // let tempData = JSON.parse(getDecryptedData(req.body.data));
     let tempData = JSON.parse(JSON.stringify(req.body));
-    console.log(tempData)
+    console.log(tempData);
     // let id = JSON.parse(JSON.stringify(req.body.id));
     let post = await cicdModel.cicdData.findOneAndUpdate(
       { _id: tempData._id },
-      {$set: {"itemName": tempData.itemName, "cicdStages": tempData.cicdStages}},
+      {
+        $set: { itemName: tempData.itemName, cicdStages: tempData.cicdStages },
+      },
       { new: true, runValidator: true }
     );
     res.send(post);
@@ -309,10 +316,13 @@ async function ssh(cicdStages: any, id: any) {
     status: "running",
     cicdStageOutput: [],
   };
+  let connEnd = false;
+  let output: any = undefined;
 
-  for (const stage of cicdStages) {
+  // for (const stage of cicdStages) {
+  for (let index = 0; index < cicdStages.length; index++) {
     let _stageLogs: any = {
-      stageName: stage.stageName,
+      stageName: cicdStages[index].stageName,
       startTime: Date.now(),
       endTime: null,
       status: "running",
@@ -320,35 +330,42 @@ async function ssh(cicdStages: any, id: any) {
       logs: [],
     };
     let host = await hostModel.hostData.findOne({
-      hostName: stage.remoteHost,
+      hostName: cicdStages[index].remoteHost,
     });
     let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/${await cicd.itemName} && cd ${await host.hostPath}/cicd-owl/${await cicd.itemName}`;
-    let sshCommand = _cicdHostPath + " && " + stage.command;
-    console.log(sshCommand);
-    let output = await sshConnect(await host, sshCommand);
-    let resDataPromiseArr: any = [];
-    resDataPromiseArr.push(
-      new Promise(async (resolve: any, reject: any) => {
-        _stageLogs.logs.push(
-          await JSON.parse(JSON.stringify("" + output.output))
-          // await output.output
-        );
-        _stageLogs.code = output.code;
-        if (output.code === 0) {
-          _stageLogs.status = "success";
-          _cicdStageOutput.status = "success";
-        } else {
-          _stageLogs.status = "failed";
-          _cicdStageOutput.status = "failed";
-        }
-        _stageLogs.endTime = Date.now();
-        _cicdStageOutput.cicdStageOutput.push(_stageLogs);
-        stageData = await _cicdStageOutput;
-        resolve();
-      })
-    );
-    await Promise.all(resDataPromiseArr);
-    _cicdStageOutput.endTime = Date.now();
+    let sshCommand = _cicdHostPath + " && " + cicdStages[index].command;
+    // console.log(sshCommand);
+
+    if (output && output.code != 0) {
+      break;
+      // console.log(output.code)
+    } else {
+      if (index === cicdStages.length - 1) connEnd = true;
+      output = await sshConnect(await host, sshCommand, connEnd);
+      let resDataPromiseArr: any = [];
+      resDataPromiseArr.push(
+        new Promise(async (resolve: any, reject: any) => {
+          _stageLogs.logs.push(
+            await JSON.parse(JSON.stringify("" + output.output))
+            // await output.output
+          );
+          _stageLogs.code = output.code;
+          if (output.code === 0) {
+            _stageLogs.status = "success";
+            _cicdStageOutput.status = "success";
+          } else {
+            _stageLogs.status = "failed";
+            _cicdStageOutput.status = "failed";
+          }
+          _stageLogs.endTime = Date.now();
+          _cicdStageOutput.cicdStageOutput.push(_stageLogs);
+          stageData = await _cicdStageOutput;
+          resolve();
+        })
+      );
+      await Promise.all(resDataPromiseArr);
+      _cicdStageOutput.endTime = Date.now();
+    }
   }
   await cicdModel.cicdData.findByIdAndUpdate(
     { _id: id },
@@ -361,7 +378,7 @@ async function ssh(cicdStages: any, id: any) {
   return stageData;
 }
 
-async function sshConnect(host: any, command: string) {
+async function sshConnect(host: any, command: string, connEnd: boolean) {
   let output: any = [];
   let outputCode: number = -1;
   const { Client } = require("ssh2");
@@ -372,20 +389,35 @@ async function sshConnect(host: any, command: string) {
       conn
         .on("ready", async () => {
           console.log("Client :: ready");
+          console.log("Command is => " + command);
 
           conn.exec(command, async (err: any, stream: any) => {
             if (err) throw err;
             stream
               .on("close", async (code: any, signal: any) => {
-                console.log(
-                  "Stream :: close :: code: " +
-                    (await code) +
-                    ", signal: " +
-                    (await signal)
-                );
                 outputCode = await code;
-                conn.end();
                 resolve();
+                if (connEnd) {
+                  console.log(
+                    "Stream :: close :: code: " +
+                      (await code) +
+                      ", signal: " +
+                      (await signal)
+                  );
+                  console.log(
+                    "Connection End: All Commands Are Successfully RUN"
+                  );
+                  conn.end();
+                } else if ((await code) != 0) {
+                  console.log(
+                    "Stream :: close :: code: " +
+                      (await code) +
+                      ", signal: " +
+                      (await signal)
+                  );
+                  console.log("Connection End: Last Command Failed");
+                  conn.end();
+                }
               })
               .on("data", async (data: any) => {
                 // console.log('STDOUT: ' + data);
