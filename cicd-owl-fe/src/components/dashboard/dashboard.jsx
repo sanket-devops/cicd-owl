@@ -196,8 +196,10 @@ function Dashboard() {
             "id": rowData._id,
             "cicdStages": rowData.cicdStages
         }
-        await _runCicd(body)
-        await loadData();
+        _runCicd(body);
+        setTimeout(async () => {
+            await loadData();
+        }, 3000);
     };
 
     const runStage = async (rowData) => {
