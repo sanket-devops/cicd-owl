@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import './dashboard.css'
 import { Navigate, Route, Routes, useNavigate, Link } from "react-router-dom";
 import { classNames } from 'primereact/utils';
@@ -232,6 +232,26 @@ function Dashboard() {
         await loadData();
     };
 
+    const showWindow = async () => {
+        setTimeout(() => {
+            if (lastMessage !== null) {
+                console.log(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+                let stageWindow = window.open("", "", "toolbar=yes,scrollbars=yes,resizable=yes,top=800,left=1000,width=800,height=300");
+                // stageWindow.document.write(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+                stageWindow.document.write(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+            }
+        }, 250);
+    }
+
+    const runSocket = async (rowData) => {
+        let body = {
+            "stageName": rowData.stageName,
+            "remoteHost": rowData.remoteHost,
+            "command": rowData.command
+        }
+        sendJsonMessage(body);
+    };
+
     const editStageItem = (rowData) => {
         setNewStage(rowData)
         // console.log(host)
@@ -412,6 +432,8 @@ function Dashboard() {
     const actionStageBodyTemplate = (rowData) => {
         return (
             <React.Fragment>
+                <Button icon="pi pi-eye" rounded outlined className="mr-2" onClick={(e) => showWindow()} />
+                <Button icon="pi pi-arrow-right-arrow-left" rounded outlined className="mr-2" onClick={(e) => runSocket(rowData)} />
                 <Button icon="pi pi-play" rounded outlined className="mr-2" onClick={(e) => runStage(rowData)} />
                 <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={(e) => editStageItem(rowData)} />
                 <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={(e) => deleteStageItem(rowData)} />
@@ -578,7 +600,7 @@ function Dashboard() {
                                 </div>
                                 <div className="flex-auto">
                                     <span className="p-float-label">
-                                        <Dropdown value={newStage.remoteHost} onChange={(e) => stageHostChange(e, 'remoteHost')} options={host} optionLabel="hostName" placeholder="Host Name" className="w-full md:w-14rem" />
+                                        <Dropdown value={newStage.remoteHost} onChange={(e) => stageHostChange(e, 'remoteHost')} options={host} optionLabel="hostName" placeholder={selectedHost} className="w-full md:w-14rem" />
                                         <label htmlFor="Host Name">Host Name</label>
                                     </span>
                                 </div>

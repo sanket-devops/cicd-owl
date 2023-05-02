@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import mongoose from "mongoose";
 import WebSocket, { WebSocketServer } from "ws";
 
+const { Client } = require("ssh2");
 const fastify = Fastify();
 fastify.register(cors, {
   // put your options here
@@ -35,20 +36,20 @@ const wss = new WebSocketServer({ port: WebSocketPort }, function () {
   console.log(`Cicd-Owl-Wss listen at : http://${hostname}:${WebSocketPort}`);
 });
 
-wss.on('connection', (ws, req) => {
-  // Handles new connection
-  let clientIp = req.socket.remoteAddress;
-  console.log(`WS Client ${clientIp} is Connected...`)
-  ws.on('message', (data) => {
-    console.log(`Recived message from client: ${data}`);
-    ws.send(`Server: Yes I am ${data}`)
-  })
-  ws.send(`Hello, This is WS from Cicd-Owl...`)
-  ws.on('error', console.error);
-  ws.on('close', function close() {
-    console.log(`WS Client ${clientIp} is Disconnected...`);
-  });
-})
+// wss.on('connection', (ws, req) => {
+//   // Handles new connection
+//   let clientIp = req.socket.remoteAddress;
+//   console.log(`WS Client ${clientIp} is Connected...`)
+//   ws.on('message', (data) => {
+//     console.log(`Recived message from client: ${data}`);
+//     ws.send(`Server: Yes I am ${data}`)
+//   })
+//   ws.send(`Hello, This is WS from Cicd-Owl...`)
+//   ws.on('error', console.error);
+//   ws.on('close', function close() {
+//     console.log(`WS Client ${clientIp} is Disconnected...`);
+//   });
+// })
 
 app.get("/", (req, res) => {
   res.send(`CICD-OWL Is Running...`);
@@ -409,8 +410,7 @@ async function ssh(cicdStages: any, id: any) {
 async function sshConnect(host: any, command: string, connEnd: boolean) {
   let output: any = [];
   let outputCode: number = -1;
-  const { Client } = require("ssh2");
-  const conn = new Client();
+  let conn = new Client();
   let resDataPromiseArr: any = [];
   resDataPromiseArr.push(
     new Promise(async (resolve: any, reject: any) => {
@@ -466,10 +466,81 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
   let resData = { output: await output, code: outputCode };
   // console.log(await JSON.parse(JSON.stringify("" + resData.output)));
   // console.log(resData.output);
-  return resData;
+  return output;
 }
 
 /////////////////////////////////////////////////////////////////////
+
+wss.on("connection", (ws, req) => {
+  // Handles new connection
+  let clientIp = req.socket.remoteAddress;
+  console.log(`WS Client ${clientIp} is Connected...`);
+  ws.on("message", async (data) => {
+    let body = JSON.parse(`${data}`);
+    if (body.remoteHost) {
+      let host = await hostModel.hostData.findOne({
+        hostName: body.remoteHost,
+      });
+      let _cicdHostPath = `mkdir -p ${host.hostPath}/cicd-owl/testTemp && cd ${host.hostPath}/cicd-owl/testTemp`;
+      let sshCommand = _cicdHostPath + " && " + body.command;
+      let connEnd = true;
+      // let output = await sshConnect(host, sshCommand, connEnd);
+      let conn = new Client();
+      conn
+      .on("ready", async () => {
+        console.log("Client :: Ready Command is:\n" + sshCommand);
+
+        conn.exec(sshCommand, async (err: any, stream: any) => {
+          if (err) throw err;
+          stream
+            .on("close", async (code: any, signal: any) => {
+              if (connEnd) {
+                console.log(
+                  "Connection End: All Commands Are Successfully RUN => (code: " +
+                    (await code) +
+                    ", signal: " +
+                    (await signal) +
+                    ")"
+                );
+                conn.end();
+              } else if ((await code) != 0) {
+                console.log(
+                  "Connection End: Last Command Failed => (code: " +
+                    (await code) +
+                    ", signal: " +
+                    (await signal) +
+                    ")"
+                );
+                conn.end();
+              }
+            })
+            .on("data", async (data: any) => {
+              // console.log('STDOUT: ' + data);
+              // output.push(await data);
+              ws.send(`${await data}`);
+            })
+            .stderr.on("data", async (data: any) => {
+              // console.log('STDERR: ' + data);
+              // output.push(await data);
+              ws.send(`${await data}`);
+            });
+        });
+      })
+      .connect({
+        host: host.hostAdd,
+        port: host.hostPort,
+        username: host.hostUser,
+        password: host.hostPass,
+      });
+      // ws.send(`${output}`);
+    }
+  });
+  // ws.send(`Hello, This is WS from Cicd-Owl...`)
+  ws.on("error", console.error);
+  ws.on("close", function close() {
+    console.log(`WS Client ${clientIp} is Disconnected...`);
+  });
+});
 
 // POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {
