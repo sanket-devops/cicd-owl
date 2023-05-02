@@ -2,6 +2,7 @@ import { Iuser } from "./interfaces/Iuser";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import mongoose from "mongoose";
+import WebSocket, { WebSocketServer } from "ws";
 
 const fastify = Fastify();
 fastify.register(cors, {
@@ -9,6 +10,7 @@ fastify.register(cors, {
 });
 const hostname = "0.0.0.0";
 const port = 8888;
+const WebSocketPort = 8800;
 const app = fastify;
 const userModel = require("./models/user.model");
 const hostModel = require("./models/host.model");
@@ -26,8 +28,28 @@ mongoose
   .catch(console.error);
 
 app.listen({ port: port, host: hostname }, function () {
-  console.log(`service-owl app listen at : http://${hostname}:${port}`);
+  console.log(`Cicd-Owl-Api listen at : http://${hostname}:${port}`);
 });
+
+const wss = new WebSocketServer({ port: WebSocketPort }, function () {
+  console.log(`Cicd-Owl-Wss listen at : http://${hostname}:${WebSocketPort}`);
+});
+
+wss.on('connection', (ws, req) => {
+  // Handles new connection
+  let clientIp = req.socket.remoteAddress;
+  console.log(`WS Client ${clientIp} is Connected...`)
+  ws.on('message', (data) => {
+    console.log(`Recived message from client: ${data}`);
+    ws.send(`Server: Yes I am ${data}`)
+  })
+  ws.send(`Hello, This is WS from Cicd-Owl...`)
+  ws.on('error', console.error);
+  ws.on('close', function close() {
+    console.log(`WS Client ${clientIp} is Disconnected...`);
+  });
+})
+
 app.get("/", (req, res) => {
   res.send(`CICD-OWL Is Running...`);
 });
@@ -92,7 +114,7 @@ app.post("/cicds/cicd-save", async (req: any, res) => {
     let tempData = JSON.parse(JSON.stringify(req.body.data));
     let saved = await cicdModel.cicdData.create(tempData);
     res.send(saved);
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
@@ -154,7 +176,7 @@ app.post("/users/user-save", async (req: any, res) => {
     let tempData = JSON.parse(JSON.stringify(req.body.data));
     let saved = await userModel.userData.create(tempData);
     res.send(saved);
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
@@ -205,7 +227,7 @@ app.post("/users/login/token", async (req: any, res) => {
       res.status(401);
       res.send({ token: "Token Invalidate..." });
     }
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
@@ -236,7 +258,7 @@ app.post("/users/login", async (req: any, res) => {
       res.status(401);
       res.send({ error: "User Not Found..." });
     }
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
@@ -265,7 +287,7 @@ app.post("/hosts/host-save", async (req: any, res) => {
     let tempData = JSON.parse(JSON.stringify(req.body.data));
     let saved = await hostModel.hostData.create(tempData);
     res.send(saved);
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
@@ -455,7 +477,7 @@ app.post("/connect/ssh", async (req: any, res) => {
     let body = JSON.parse(JSON.stringify(req.body.data));
     let output = await ssh(body.cicdStages, body.id);
     res.send(output);
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
@@ -485,7 +507,7 @@ app.post("/connect/ssh/test", async (req: any, res) => {
         code: 1,
       });
     }
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });

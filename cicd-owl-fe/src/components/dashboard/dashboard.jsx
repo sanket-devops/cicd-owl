@@ -16,9 +16,24 @@ import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 import Cicd from './cicd/cicd';
+import useWebSocket from 'react-use-websocket';
 
 
 function Dashboard() {
+    const WebSocketUrl = 'ws://192.168.10.108:8800';
+    const {
+        sendMessage,
+        sendJsonMessage,
+        lastMessage,
+        lastJsonMessage,
+        readyState,
+        getWebSocket,
+      } = useWebSocket(WebSocketUrl, {
+        onOpen: () => console.log(`Cicd-Owl-Wss is Connected... `),
+        //Will attempt to reconnect on all close events, such as server shutting down
+        shouldReconnect: (closeEvent) => true,
+      });
+
     let emptyHost = {
         "hostName": "",
         "hostAdd": "",
