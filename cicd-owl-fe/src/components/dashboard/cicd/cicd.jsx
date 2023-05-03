@@ -15,6 +15,7 @@ export default function Cicd(props) {
     const [cicd, setCicd] = useState({});
     const [cicdStagesData, setCicdStagesData] = useState([]);
     const [cicdProgress, setCicdProgress] = useState(0);
+    const reloadDataCicd = useRef(null);
 
 
     let loadDataCicd = async () => {
@@ -32,16 +33,16 @@ export default function Cicd(props) {
                 if (res.status === 200) {
                     loadDataCicd();
                     // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-                    setInterval(() => {
-                        loadDataCicd();
-                    }, 10000);
+                    reloadDataCicd.interval = setInterval(async () => { await loadDataCicd() }, 10000);
                 }
                 else if (res.status === 401) {
+                    clearInterval(reloadDataCicd.interval);
                     navigate("/login");
                 }
             }());
         }
         else {
+            clearInterval(reloadDataCicd.interval);
             navigate("/login");
         }
     }, []);
@@ -71,7 +72,7 @@ export default function Cicd(props) {
         let time = ((endTime - startTime) / 1000);
         for (let index = 0; index <= time; index++) {
             setTimeout(() => {
-                let progressPercentage = ((index * 100)/time)
+                let progressPercentage = ((index * 100) / time)
                 setCicdProgress(progressPercentage.toFixed())
             }, 1000);
         }
@@ -120,6 +121,7 @@ export default function Cicd(props) {
     };
 
     let backToDashboard = () => {
+        clearInterval(reloadDataCicd.interval);
         navigate("/Dashboard");
     };
 

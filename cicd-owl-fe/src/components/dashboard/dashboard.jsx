@@ -82,11 +82,14 @@ function Dashboard() {
     const [deleteCicdsDialog, setDeleteCicdsDialog] = useState(false);
     const [selectedCicds, setSelectedCicds] = useState(null);
     const dt = useRef(null);
+    const reloadData =  useRef(null);
 
     let loadData = async () => {
         setCicdData(await _getAllCicd());
         setHost(await _getAllHost())
     };
+
+
 
     useEffect(() => {
         let token = localStorage.getItem('token');
@@ -96,16 +99,16 @@ function Dashboard() {
                 if (res.status === 200) {
                     loadData();
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-                    setInterval(() => {
-                        loadData();
-                    }, 10000);
+                    reloadData.interval = setInterval(async () => {await loadData()}, 10000);
                 }
                 else if (res.status === 401) {
+                    clearInterval(reloadData.interval);
                     navigate("/login");
                 }
             }());
         }
         else {
+            clearInterval(reloadData.interval);
             navigate("/login");
         }
     }, []);
@@ -132,6 +135,7 @@ function Dashboard() {
 
     let openCicd = async (cicdShow) => {
         // if (cicdShow.cicdStagesOutput) {
+        clearInterval(reloadData.interval);
         navigate("/cicd", { state: cicdShow });
         // }
     };
