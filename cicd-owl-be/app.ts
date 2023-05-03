@@ -383,27 +383,22 @@ async function ssh(cicdStages: any, id: any) {
       hostName: cicdStages[index].remoteHost,
     });
     let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/${await cicd.itemName} && cd ${await host.hostPath}/cicd-owl/${await cicd.itemName}`;
-    let sshCommand: string = '';
+    let sshCommand: string = "";
 
     if (cicdStages[index].command.includes("git")) {
       var mySubString = cicdStages[index].command.substring(
         cicdStages[index].command.lastIndexOf("/") + 1,
         cicdStages[index].command.lastIndexOf(".git")
       );
-      // console.log(mySubString);
-      sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`
+      sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`;
       hostPathWithGit = `${_cicdHostPath} && cd ${mySubString}`;
+    } else {
+      if (hostPathWithGit) {
+        sshCommand = `${hostPathWithGit} && ${cicdStages[index].command}`;
+      } else {
+        sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`;
+      }
     }
-    else{
-      sshCommand = `${hostPathWithGit} && ${cicdStages[index].command}`
-    }
-
-    // if (hostPathWithGit) {
-    //   sshCommand = `${hostPathWithGit} && ${cicdStages[index].command}`
-    // }
-
-    console.log(sshCommand);
-
     if (output && output.code != 0) {
       break;
       // console.log(output.code)
