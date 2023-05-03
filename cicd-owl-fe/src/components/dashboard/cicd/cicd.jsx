@@ -32,6 +32,9 @@ export default function Cicd(props) {
                 if (res.status === 200) {
                     loadDataCicd();
                     // toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
+                    setInterval(() => {
+                        loadDataCicd();
+                    }, 10000);
                 }
                 else if (res.status === 401) {
                     navigate("/login");

@@ -20,19 +20,19 @@ import useWebSocket from 'react-use-websocket';
 
 
 function Dashboard() {
-    const WebSocketUrl = 'ws://192.168.10.108:8800';
-    const {
-        sendMessage,
-        sendJsonMessage,
-        lastMessage,
-        lastJsonMessage,
-        readyState,
-        getWebSocket,
-      } = useWebSocket(WebSocketUrl, {
-        onOpen: () => console.log(`Cicd-Owl-Wss is Connected... `),
-        //Will attempt to reconnect on all close events, such as server shutting down
-        shouldReconnect: (closeEvent) => true,
-      });
+    // const WebSocketUrl = 'ws://192.168.10.108:8800';
+    // const {
+    //     sendMessage,
+    //     sendJsonMessage,
+    //     lastMessage,
+    //     lastJsonMessage,
+    //     readyState,
+    //     getWebSocket,
+    // } = useWebSocket(WebSocketUrl, {
+    //     onOpen: () => console.log(`Cicd-Owl-Wss is Connected... `),
+    //     //Will attempt to reconnect on all close events, such as server shutting down
+    //     shouldReconnect: (closeEvent) => true,
+    // });
 
     let emptyHost = {
         "hostName": "",
@@ -96,6 +96,9 @@ function Dashboard() {
                 if (res.status === 200) {
                     loadData();
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
+                    setInterval(() => {
+                        loadData();
+                    }, 10000);
                 }
                 else if (res.status === 401) {
                     navigate("/login");
@@ -232,25 +235,25 @@ function Dashboard() {
         await loadData();
     };
 
-    const showWindow = async () => {
-        setTimeout(() => {
-            if (lastMessage !== null) {
-                console.log(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
-                let stageWindow = window.open("", "", "toolbar=yes,scrollbars=yes,resizable=yes,top=800,left=1000,width=800,height=300");
-                // stageWindow.document.write(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
-                stageWindow.document.write(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
-            }
-        }, 250);
-    }
+    // const showWindow = async () => {
+    //     setTimeout(() => {
+    //         if (lastMessage !== null) {
+    //             console.log(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+    //             let stageWindow = window.open("", "", "toolbar=yes,scrollbars=yes,resizable=yes,top=800,left=1000,width=800,height=300");
+    //             // stageWindow.document.write(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+    //             stageWindow.document.write(lastMessage.data.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+    //         }
+    //     }, 250);
+    // }
 
-    const runSocket = async (rowData) => {
-        let body = {
-            "stageName": rowData.stageName,
-            "remoteHost": rowData.remoteHost,
-            "command": rowData.command
-        }
-        sendJsonMessage(body);
-    };
+    // const runSocket = async (rowData) => {
+    //     let body = {
+    //         "stageName": rowData.stageName,
+    //         "remoteHost": rowData.remoteHost,
+    //         "command": rowData.command
+    //     }
+    //     sendJsonMessage(body);
+    // };
 
     const editStageItem = (rowData) => {
         setNewStage(rowData)
@@ -432,8 +435,8 @@ function Dashboard() {
     const actionStageBodyTemplate = (rowData) => {
         return (
             <React.Fragment>
-                <Button icon="pi pi-eye" rounded outlined className="mr-2" onClick={(e) => showWindow()} />
-                <Button icon="pi pi-arrow-right-arrow-left" rounded outlined className="mr-2" onClick={(e) => runSocket(rowData)} />
+                {/* <Button icon="pi pi-eye" rounded outlined className="mr-2" onClick={(e) => showWindow()} />
+                <Button icon="pi pi-arrow-right-arrow-left" rounded outlined className="mr-2" onClick={(e) => runSocket(rowData)} /> */}
                 <Button icon="pi pi-play" rounded outlined className="mr-2" onClick={(e) => runStage(rowData)} />
                 <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={(e) => editStageItem(rowData)} />
                 <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={(e) => deleteStageItem(rowData)} />

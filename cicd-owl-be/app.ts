@@ -2,7 +2,8 @@ import { Iuser } from "./interfaces/Iuser";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import mongoose from "mongoose";
-import WebSocket, { WebSocketServer } from "ws";
+import WebSocket, { CLOSING, WebSocketServer } from "ws";
+import { setInterval } from "timers";
 
 const { Client } = require("ssh2");
 const fastify = Fastify();
@@ -25,17 +26,19 @@ mongoose
     // useNewUrlParser: true,
     // useUnifiedTopology: true,
   })
-  .then(() => console.log(`MongoDB Connected: ${db}`))
+  .then(() => {
+    console.log(`MongoDB Connected: ${db}`)
+  })
   .catch(console.error);
 
-app.listen({ port: port, host: hostname }, function () {
-  console.log(`Cicd-Owl-Api listen at : http://${hostname}:${port}`);
-});
+  app.listen({ port: port, host: hostname }, function () {
+    console.log(`Cicd-Owl-Api listen at : http://${hostname}:${port}`);
+  });
 
-const wss = new WebSocketServer({ port: WebSocketPort }, function () {
-  console.log(`Cicd-Owl-Wss listen at : http://${hostname}:${WebSocketPort}`);
-});
-
+  // const wss = new WebSocketServer({ port: WebSocketPort }, function () {
+  //   console.log(`Cicd-Owl-Wss listen at : http://${hostname}:${WebSocketPort}`);
+  // });
+  
 // wss.on('connection', (ws, req) => {
 //   // Handles new connection
 //   let clientIp = req.socket.remoteAddress;
@@ -75,6 +78,30 @@ setInterval(() => {
 }, 60000 * 1440);
 
 /////////////////////////////////////////////////////////////////////
+
+
+// wss.on("connection", async (ws, req) => {
+//   // Handles new connection
+//   let clientIp = req.socket.remoteAddress;
+//   console.log(`WS Client ${clientIp} is Connected...`);
+//   setInterval( async () => {
+//     try {
+//       let cicds = await cicdModel.cicdData
+//         .find({})
+//         .select("itemName status cicdStages createdAt updatedAt")
+//         .sort({ _id: -1 });
+//         ws.send(JSON.stringify(cicds));
+//         // console.log("Reload fresh data");
+//     } catch (e) {
+//       console.log(e);
+//     }
+//   }, 10000);
+//   // ws.send(`Hello, This is WS from Cicd-Owl...`)
+//   ws.on("error", console.error);
+//   ws.on("close", function close() {
+//     console.log(`WS Client ${clientIp} is Disconnected...`);
+//   });
+// });
 
 //GET Cicds Items
 app.get("/cicds", async (req, res) => {
@@ -466,81 +493,11 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
   let resData = { output: await output, code: outputCode };
   // console.log(await JSON.parse(JSON.stringify("" + resData.output)));
   // console.log(resData.output);
-  return output;
+  return resData;
 }
 
 /////////////////////////////////////////////////////////////////////
 
-wss.on("connection", (ws, req) => {
-  // Handles new connection
-  let clientIp = req.socket.remoteAddress;
-  console.log(`WS Client ${clientIp} is Connected...`);
-  ws.on("message", async (data) => {
-    let body = JSON.parse(`${data}`);
-    if (body.remoteHost) {
-      let host = await hostModel.hostData.findOne({
-        hostName: body.remoteHost,
-      });
-      let _cicdHostPath = `mkdir -p ${host.hostPath}/cicd-owl/testTemp && cd ${host.hostPath}/cicd-owl/testTemp`;
-      let sshCommand = _cicdHostPath + " && " + body.command;
-      let connEnd = true;
-      // let output = await sshConnect(host, sshCommand, connEnd);
-      let conn = new Client();
-      conn
-      .on("ready", async () => {
-        console.log("Client :: Ready Command is:\n" + sshCommand);
-
-        conn.exec(sshCommand, async (err: any, stream: any) => {
-          if (err) throw err;
-          stream
-            .on("close", async (code: any, signal: any) => {
-              if (connEnd) {
-                console.log(
-                  "Connection End: All Commands Are Successfully RUN => (code: " +
-                    (await code) +
-                    ", signal: " +
-                    (await signal) +
-                    ")"
-                );
-                conn.end();
-              } else if ((await code) != 0) {
-                console.log(
-                  "Connection End: Last Command Failed => (code: " +
-                    (await code) +
-                    ", signal: " +
-                    (await signal) +
-                    ")"
-                );
-                conn.end();
-              }
-            })
-            .on("data", async (data: any) => {
-              // console.log('STDOUT: ' + data);
-              // output.push(await data);
-              ws.send(`${await data}`);
-            })
-            .stderr.on("data", async (data: any) => {
-              // console.log('STDERR: ' + data);
-              // output.push(await data);
-              ws.send(`${await data}`);
-            });
-        });
-      })
-      .connect({
-        host: host.hostAdd,
-        port: host.hostPort,
-        username: host.hostUser,
-        password: host.hostPass,
-      });
-      // ws.send(`${output}`);
-    }
-  });
-  // ws.send(`Hello, This is WS from Cicd-Owl...`)
-  ws.on("error", console.error);
-  ws.on("close", function close() {
-    console.log(`WS Client ${clientIp} is Disconnected...`);
-  });
-});
 
 // POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {
