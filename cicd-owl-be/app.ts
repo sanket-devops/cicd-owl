@@ -27,18 +27,18 @@ mongoose
     // useUnifiedTopology: true,
   })
   .then(() => {
-    console.log(`MongoDB Connected: ${db}`)
+    console.log(`MongoDB Connected: ${db}`);
   })
   .catch(console.error);
 
-  app.listen({ port: port, host: hostname }, function () {
-    console.log(`Cicd-Owl-Api listen at : http://${hostname}:${port}`);
-  });
+app.listen({ port: port, host: hostname }, function () {
+  console.log(`Cicd-Owl-Api listen at : http://${hostname}:${port}`);
+});
 
-  // const wss = new WebSocketServer({ port: WebSocketPort }, function () {
-  //   console.log(`Cicd-Owl-Wss listen at : http://${hostname}:${WebSocketPort}`);
-  // });
-  
+// const wss = new WebSocketServer({ port: WebSocketPort }, function () {
+//   console.log(`Cicd-Owl-Wss listen at : http://${hostname}:${WebSocketPort}`);
+// });
+
 // wss.on('connection', (ws, req) => {
 //   // Handles new connection
 //   let clientIp = req.socket.remoteAddress;
@@ -78,7 +78,6 @@ setInterval(() => {
 }, 60000 * 1440);
 
 /////////////////////////////////////////////////////////////////////
-
 
 // wss.on("connection", async (ws, req) => {
 //   // Handles new connection
@@ -369,6 +368,7 @@ async function ssh(cicdStages: any, id: any) {
   cicd.cicdStagesOutput.push(_cicdStageOutput);
   let connEnd = false;
   let output: any = undefined;
+  let hostPathWithGit: string = "";
 
   for (let index = 0; index < cicdStages.length; index++) {
     let _stageLogs: any = {
@@ -383,8 +383,26 @@ async function ssh(cicdStages: any, id: any) {
       hostName: cicdStages[index].remoteHost,
     });
     let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/${await cicd.itemName} && cd ${await host.hostPath}/cicd-owl/${await cicd.itemName}`;
-    let sshCommand = _cicdHostPath + " && " + cicdStages[index].command;
-    // console.log(sshCommand);
+    let sshCommand: string = '';
+
+    if (cicdStages[index].command.includes("git")) {
+      var mySubString = cicdStages[index].command.substring(
+        cicdStages[index].command.lastIndexOf("/") + 1,
+        cicdStages[index].command.lastIndexOf(".git")
+      );
+      // console.log(mySubString);
+      sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`
+      hostPathWithGit = `${_cicdHostPath} && cd ${mySubString}`;
+    }
+    else{
+      sshCommand = `${hostPathWithGit} && ${cicdStages[index].command}`
+    }
+
+    // if (hostPathWithGit) {
+    //   sshCommand = `${hostPathWithGit} && ${cicdStages[index].command}`
+    // }
+
+    console.log(sshCommand);
 
     if (output && output.code != 0) {
       break;
@@ -497,7 +515,6 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
 }
 
 /////////////////////////////////////////////////////////////////////
-
 
 // POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {

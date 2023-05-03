@@ -86,6 +86,8 @@ function Dashboard() {
 
     let loadData = async () => {
         setCicdData(await _getAllCicd());
+    };
+    let loadHost = async () => {
         setHost(await _getAllHost())
     };
 
@@ -98,6 +100,7 @@ function Dashboard() {
                 let res = await validateToken(token);
                 if (res.status === 200) {
                     loadData();
+                    loadHost();
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
                     reloadData.interval = setInterval(async () => {await loadData()}, 10000);
                 }
