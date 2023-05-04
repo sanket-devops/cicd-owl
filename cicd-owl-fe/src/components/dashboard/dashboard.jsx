@@ -8,14 +8,11 @@ import { Column } from 'primereact/column';
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
-import { RadioButton } from 'primereact/radiobutton';
-import { InputNumber } from 'primereact/inputnumber';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
 import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
-import Cicd from './cicd/cicd';
 import useWebSocket from 'react-use-websocket';
 
 
@@ -55,19 +52,12 @@ function Dashboard() {
         "cicdStages": [],
         "cicdStagesOutput": []
     };
-    
-    const hosts = [
-        { name: 'New York', code: 'NY' },
-        { name: 'Rome', code: 'RM' },
-        { name: 'London', code: 'LDN' },
-        { name: 'Istanbul', code: 'IST' },
-        { name: 'Paris', code: 'PRS' }
-    ];
+
     const navigate = useNavigate();
-    let toast = useRef(null);
-    let [cicdData, setCicdData] = useState([]);
+    const toast = useRef(null);
+    const [cicdData, setCicdData] = useState([]);
+    const [hostData, setHostData] = useState([]);
     const [selectedHost, setSelectedHost] = useState(null);
-    // let [showCicdData, setShowCicdData] = useState([]);
     const [selectedItems, setSelectedItems] = useState(null);
     const [globalFilter, setGlobalFilter] = useState(null);
     const [globalFilterStage, setGlobalFilterStage] = useState(null);
@@ -79,20 +69,17 @@ function Dashboard() {
     const [cicdDialog, setCicdDialog] = useState(false);
     const [stageDialog, setStageDialog] = useState(false);
     const [hostDialog, setHostDialog] = useState(false);
-    // const [showCicdDialog, setShowCicdDialog] = useState(false);
-    const [cicds, setCicds] = useState(null);
     const [deleteCicdDialog, setDeleteCicdDialog] = useState(false);
     const [deleteCicdStageDialog, setDeleteCicdStageDialog] = useState(false);
-    const [deleteCicdsDialog, setDeleteCicdsDialog] = useState(false);
-    const [selectedCicds, setSelectedCicds] = useState(null);
+    const [deleteHostDialog, setDeleteHostDialog] = useState(false);
     const dt = useRef(null);
-    const reloadData =  useRef(null);
+    const reloadData = useRef(null);
 
     let loadData = async () => {
         setCicdData(await _getAllCicd());
     };
     let loadHost = async () => {
-        setHost(await _getAllHost())
+        setHostData(await _getAllHost())
     };
 
     useEffect(() => {
@@ -104,7 +91,7 @@ function Dashboard() {
                     loadData();
                     loadHost();
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-                    reloadData.interval = setInterval(async () => {await loadData()}, 10000);
+                    reloadData.interval = setInterval(async () => { await loadData() }, 10000);
                 }
                 else if (res.status === 401) {
                     clearInterval(reloadData.interval);
@@ -133,7 +120,7 @@ function Dashboard() {
     };
 
     let openNewHost = () => {
-        setStage(emptyHost);
+        setHost(emptyHost);
         setSubmitted(false);
         setHostDialog(true);
     };
@@ -153,9 +140,9 @@ function Dashboard() {
         setDeleteCicdStageDialog(false);
     };
 
-    // const hideDeleteCicdsDialog = () => {
-    //     setDeleteCicdsDialog(false);
-    // };
+    const hideDeleteHostDialog = () => {
+        setDeleteHostDialog(false);
+    };
 
     const hideDialog = () => {
         setSubmitted(false)
@@ -185,6 +172,12 @@ function Dashboard() {
         setDeleteCicdStageDialog(true)
     };
 
+    const deleteHostItem = (rowData) => {
+        let _newHost = rowData
+        setHost(_newHost)
+        setDeleteHostDialog(true)
+    };
+
     const deleteCicd = () => {
         _deleteCicd(cicd)
         setTimeout(() => {
@@ -193,6 +186,16 @@ function Dashboard() {
         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicd Deleted', life: 3000 });
         setDeleteCicdDialog(false);
         setCicd(emptyCicd);
+    };
+
+    const deleteHost = () => {
+        _deleteHost(host)
+        setTimeout(() => {
+            loadHost();
+        }, 250);
+        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Host Deleted', life: 3000 });
+        setDeleteHostDialog(false);
+        setHost(emptyHost);
     };
 
     const deleteCicdStage = () => {
@@ -278,13 +281,18 @@ function Dashboard() {
         setSubmitted(false);
     };
 
-    const deleteSelectedCicds = () => {
-        let _cicd = cicds.filter((val) => !selectedCicds.includes(val));
-        setCicds(_cicd);
-        setDeleteCicdsDialog(false);
-        setSelectedCicds(null);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Deleted', life: 3000 });
+    const editHostItem = (rowData) => {
+        setHost(rowData)
+        setSubmitted(false);
     };
+
+    // const deleteSelectedCicds = () => {
+    //     let _cicd = cicds.filter((val) => !selectedCicds.includes(val));
+    //     setCicds(_cicd);
+    //     setDeleteCicdsDialog(false);
+    //     setSelectedCicds(null);
+    //     toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Deleted', life: 3000 });
+    // };
 
     const saveCicd = async () => {
         setSubmitted(true);
@@ -333,19 +341,18 @@ function Dashboard() {
 
     const saveHost = async () => {
         setSubmitted(true);
-        if (cicd.hostAdd.trim()) {
+        if (host.hostAdd.trim() && host.hostPort && host.hostUser.trim() && host.hostPass.trim() && host.hostPath.trim()) {
             if (host._id) {
                 _updateHost(host)
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Host Updated', life: 3000 });
             } else {
-                _saveCicd(host)
+                _saveHost(host)
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Host Saved', life: 3000 });
             }
             setTimeout(() => {
-                loadData();
+                loadHost();
             }, 250);
             setHostDialog(false);
-            // toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Cicds Saved', life: 3000 });
         }
     }
     // const findIndexById = (id) => {
@@ -378,12 +385,7 @@ function Dashboard() {
             <Button label="Save" icon="pi pi-check" onClick={saveHost} />
         </React.Fragment>
     );
-    // const showCicdDialogFooter = (
-    //     <React.Fragment>
-    //         <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-    //         {/* <Button label="Save" icon="pi pi-check" onClick={saveCicd} /> */}
-    //     </React.Fragment>
-    // );
+
     const deleteCicdDialogFooter = (
         <React.Fragment>
             <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteCicdDialog} />
@@ -398,16 +400,12 @@ function Dashboard() {
         </React.Fragment>
     );
 
-    // const deleteCicdsDialogFooter = (
-    //     <React.Fragment>
-    //         <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteCicdsDialog} />
-    //         <Button label="Yes" icon="pi pi-check" severity="danger" onClick={deleteSelectedCicds} />
-    //     </React.Fragment>
-    // );
-
-    const confirmDeleteSelected = () => {
-        setDeleteCicdsDialog(true);
-    };
+    const deleteHostDialogFooter = (
+        <React.Fragment>
+            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteHostDialog} />
+            <Button label="Yes" icon="pi pi-check" severity="danger" onClick={deleteHost} />
+        </React.Fragment>
+    );
 
     let LogoutClick = async () => {
         localStorage.removeItem('token');
@@ -418,7 +416,7 @@ function Dashboard() {
         return (
             <div className="flex flex-wrap gap-2">
                 <Button label="Cicd" icon="pi pi-plus" severity="success" onClick={openNewCicd} />
-                <Button label="Host" icon="pi pi-plus" severity="success" onClick={openNewHost} />
+                <Button label="Host" icon="pi pi-server" severity="success" onClick={openNewHost} />
                 {/* <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedItems || !selectedItems.length} /> */}
             </div>
         );
@@ -459,6 +457,15 @@ function Dashboard() {
             </React.Fragment>
         );
     };
+    const actionHostBodyTemplate = (rowData) => {
+        return (
+            <React.Fragment>
+                {/* <Button icon="pi pi-play" rounded outlined className="mr-2" onClick={(e) => runStage(rowData)} /> */}
+                <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={(e) => editHostItem(rowData)} />
+                <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={(e) => deleteHostItem(rowData)} />
+            </React.Fragment>
+        );
+    };
     const statusBodyTemplate = (rowData) => {
         return <Tag value={rowData.status} severity={getSeverity(rowData)}></Tag>;
     };
@@ -482,22 +489,15 @@ function Dashboard() {
         }
     };
 
-    const updated = (cicdData) => {
-        let date = new Date(cicdData.updatedAt).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
+    const updated = (dateData) => {
+        let date = new Date(dateData.updatedAt).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
         return date;
     }
-    const created = (cicdData) => {
-        let date = new Date(cicdData.createdAt).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
+    const created = (dateData) => {
+        let date = new Date(dateData.createdAt).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
         return date;
     }
-    // const startTime = (showCicdData) => {
-    //     let date = new Date(showCicdData.startTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
-    //     return date;
-    // }
-    // const endTime = (showCicdData) => {
-    //     let date = new Date(showCicdData.endTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
-    //     return date;
-    // }
+
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
             <h4 className="m-0">Cicds</h4>
@@ -527,11 +527,11 @@ function Dashboard() {
         setCicd(_cicd);
     };
 
-    const onInputHostNameChange = (e, hostName) => {
+    const hostChange = (e, hostData) => {
         const val = (e.target && e.target.value) || '';
         let _host = { ...host };
 
-        _host[`${hostName}`] = val;
+        _host[`${hostData}`] = val;
 
         setHost(_host);
     };
@@ -543,7 +543,6 @@ function Dashboard() {
         _stage[`${stageData}`] = val;
 
         setNewStage(_stage);
-        // console.log(newStage)
     };
 
     const stageHostChange = (e, stageHostName) => {
@@ -555,15 +554,6 @@ function Dashboard() {
         setNewStage(_stage);
         setSelectedHost(val)
     };
-
-    // const removeStageRow = (index) => {
-    //     cicd.cicdStages.splice(index, 1);
-    // }
-
-    // const addStageRow = () => {
-    //     cicd.cicdStages.push({});
-    // }
-    // const footer = `In total there are ${cicdData ? cicdData.length : 0} cicds.`;
 
     return (
         <>
@@ -603,8 +593,6 @@ function Dashboard() {
                                 <Column field="stageName" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
                                 <Column field="remoteHost" header="Remote Host" sortable style={{ minWidth: '16rem' }}></Column>
                                 <Column field="command" header="Command" sortable style={{ minWidth: '16rem' }}></Column>
-                                {/* <Column field={updated} header="Updated" sortable></Column>
-                                <Column field={created} header="Created" sortable></Column> */}
                                 <Column header="Action" body={actionStageBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
                             </DataTable>
                         </div>
@@ -628,7 +616,7 @@ function Dashboard() {
                                 </div>
                                 <div className="flex-auto">
                                     <span className="p-float-label">
-                                        <Dropdown value={newStage.remoteHost} onChange={(e) => stageHostChange(e, 'remoteHost')} options={host} optionLabel="hostName" placeholder={selectedHost} className="w-full md:w-14rem" />
+                                        <Dropdown value={newStage.remoteHost} onChange={(e) => stageHostChange(e, 'remoteHost')} options={hostData} optionLabel="hostName" placeholder={selectedHost} className="w-full md:w-14rem" />
                                         <label htmlFor="Host Name">Host Name</label>
                                     </span>
                                 </div>
@@ -638,10 +626,6 @@ function Dashboard() {
                                         <label htmlFor="Command">Command</label>
                                     </span>
                                 </div>
-                                {/* <div className="flex-auto">
-                                    <Button type="button" icon="pi pi-plus" className="p-button-rounded p-button-success ml-2"></Button>
-                                    <Button type="button" icon="pi pi-minus" className="p-button-rounded p-button-danger ml-2"></Button>
-                                </div> */}
                             </div>
                         </div>
                     </div>
@@ -656,64 +640,93 @@ function Dashboard() {
                 <Dialog visible={deleteCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdDialogFooter} onHide={hideDeleteCicdDialog}>
                     <div className="confirmation-content">
                         <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                        {cicd && (
-                            <span>
-                                Are you sure you want to delete <b>{cicd.name}</b>?
-                            </span>
-                        )}
+                        {cicd && (<span>Are you sure you want to delete cicd <b>{cicd.itemName}</b> ?</span>)}
                     </div>
                 </Dialog>
 
                 <Dialog visible={deleteCicdStageDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdStageDialogFooter} onHide={hideDeleteCicStagedDialog}>
                     <div className="confirmation-content">
                         <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                        {cicd && <span>Are you sure you want to delete the selected stage?</span>}
+                        {stage && <span>Are you sure you want to delete the selected stage <b>{stage.stageName}</b> ?</span>}
+                    </div>
+                </Dialog>
+
+                <Dialog visible={deleteHostDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteHostDialogFooter} onHide={hideDeleteHostDialog}>
+                    <div className="confirmation-content">
+                        <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
+                        {host && <span>Are you sure you want to delete the selected host <b>{host.hostName}</b> ?</span>}
                     </div>
                 </Dialog>
 
                 <Dialog visible={hostDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Add Host" modal className="p-fluid" footer={hostDialogFooter} onHide={hideHostDialog}>
-                <div className="field">
+                    <div className="field">
                         <label htmlFor="hostName" className="font-bold">
                             Host Name
                         </label>
-                        <InputText id="hostName" value={host.hostName} onChange={(e) => onInputHostNameChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !host.hostName })} />
+                        <InputText id="hostName" value={host.hostName} onChange={(e) => hostChange(e, 'hostName')} required autoFocus className={classNames({ 'p-invalid': submitted && !host.hostName })} />
                         {submitted && !host.hostName && <small className="p-error">Host Name is required.</small>}
-                        <div className="card">
-                            <Toolbar className="mb-4" left={leftToolbarStageTemplate}></Toolbar>
-
-                            {/* <DataTable value={stage} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
-                                paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
-                                paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Stages" globalFilter={globalFilterStage} header={headerStage}> */}
-                                {/* <Column selectionMode="multiple" exportable={false}></Column> */}
-                                {/* <Column field="stageName" header="Name" sortable style={{ minWidth: '16rem' }}></Column> */}
-                                {/* <Column field="remoteHost" header="Remote Host" sortable style={{ minWidth: '16rem' }}></Column> */}
-                                {/* <Column field="command" header="Command" sortable style={{ minWidth: '16rem' }}></Column> */}
-                                {/* <Column field={updated} header="Updated" sortable></Column>
-                                <Column field={created} header="Created" sortable></Column> */}
-                                {/* <Column header="Action" body={actionStageBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column> */}
-                            {/* </DataTable> */}
+                        <div className="field">
+                            <div className="flex-auto">
+                                {/* <label htmlFor="integer" className="font-bold block mb-2">
+                                    Host Profile
+                                </label> */}
+                            </div>
+                            <div className="card">
+                                <div id="stage" className="flex flex-wrap gap-3 mb-4">
+                                    <div className="flex-auto">
+                                        <span className="p-float-label">
+                                            <InputText id="stageName" value={host.hostAdd} onChange={(e) => hostChange(e, 'hostAdd')} className="w-full" />
+                                            {submitted && !host.hostAdd && <small className="p-error">Host Address is required.</small>}
+                                            <label htmlFor="Stage Name">Host Address</label>
+                                        </span>
+                                    </div>
+                                    <div className="flex-auto">
+                                        <span className="p-float-label">
+                                            <InputText id="stageName" value={host.hostPort} onChange={(e) => hostChange(e, 'hostPort')} className="w-full" />
+                                            {submitted && !host.hostPort && <small className="p-error">Host Port is required.</small>}
+                                            <label htmlFor="Stage Name">Host Port</label>
+                                        </span>
+                                    </div>
+                                    <div className="flex-auto">
+                                        <span className="p-float-label">
+                                            <InputText id="stageName" value={host.hostUser} onChange={(e) => hostChange(e, 'hostUser')} className="w-full" />
+                                            {submitted && !host.hostUser && <small className="p-error">Host Username is required.</small>}
+                                            <label htmlFor="Stage Name">Username</label>
+                                        </span>
+                                    </div>
+                                    <div className="flex-auto">
+                                        <span className="p-float-label">
+                                            <InputText id="stageName" value={host.hostPass} onChange={(e) => hostChange(e, 'hostPass')} className="w-full" />
+                                            {submitted && !host.hostPass && <small className="p-error">Host Password is required.</small>}
+                                            <label htmlFor="Stage Name">Password</label>
+                                        </span>
+                                    </div>
+                                    <div className="flex-auto">
+                                        <span className="p-float-label">
+                                            <InputText id="stageName" value={host.hostPath} onChange={(e) => hostChange(e, 'hostPath')} className="w-full" />
+                                            {submitted && !host.hostPath && <small className="p-error">Host Path is required.</small>}
+                                            <label htmlFor="Stage Name">Host Path</label>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                        {/* <Toolbar className="mb-4" left={leftToolbarStageTemplate}>Added Hosts</Toolbar> */}
+                        <DataTable value={hostData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
+                            paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
+                            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Stages" globalFilter={globalFilterStage} header={headerStage}>
+                            <Column selectionMode="multiple" exportable={false}></Column>
+                            <Column field="hostName" header="Host Name" sortable style={{ minWidth: '15rem' }}></Column>
+                            <Column field="hostAdd" header="Host Address" sortable style={{ minWidth: '11rem' }}></Column>
+                            <Column field="hostPort" header="Port" sortable style={{ minWidth: '2rem' }}></Column>
+                            <Column field="hostPath" header="Host Path" sortable style={{ minWidth: '15rem' }}></Column>
+                            <Column field={updated} header="Updated" sortable style={{ minWidth: '11rem' }}></Column>
+                            <Column field={created} header="Created" sortable style={{ minWidth: '11rem' }}></Column>
+                            <Column header="Action" body={actionHostBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
+                        </DataTable>
                     </div>
                 </Dialog>
-
-                {/* <Dialog visible={showCicdDialog} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}> */}
-                    {/* <div> */}
-                        {/* <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)} */}
-                            {/* dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]} */}
-                            {/* paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown" */}
-                            {/* currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}> */}
-                            {/* <Column selectionMode="single" exportable={false}></Column> */}
-                            {/* <Column field="buildNumber" header="Build No." sortable style={{ minWidth: '5rem' }}></Column> */}
-                            {/* <Column field="buildNumber" header="Name" sortable style={{ minWidth: '16rem' }}></Column> */}
-                            {/* <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column> */}
-                            {/* <Column field={startTime} header="Start" sortable></Column> */}
-                            {/* <Column field={endTime} header="End" sortable></Column> */}
-                            {/* <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column> */}
-                        {/* </DataTable> */}
-                    {/* </div> */}
-                {/* </Dialog> */}
-
             </div>
         </>
     )
