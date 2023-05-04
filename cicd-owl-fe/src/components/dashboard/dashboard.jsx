@@ -14,7 +14,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
+import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 import Cicd from './cicd/cicd';
 import useWebSocket from 'react-use-websocket';
 
@@ -37,21 +37,25 @@ function Dashboard() {
     let emptyHost = {
         "hostName": "",
         "hostAdd": "",
+        "hostPort": 22,
         "hostUser": "",
         "hostPass": "",
-        "hostWorkDir": ""
+        "hostPath": ""
     }
+
     let emptyStage = {
         "stageName": "",
         "remoteHost": "",
         "command": ""
     };
+
     let emptyCicd = {
         "itemName": "",
         "status": "",
         "cicdStages": [],
         "cicdStagesOutput": []
     };
+    
     const hosts = [
         { name: 'New York', code: 'NY' },
         { name: 'Rome', code: 'RM' },
@@ -63,7 +67,7 @@ function Dashboard() {
     let toast = useRef(null);
     let [cicdData, setCicdData] = useState([]);
     const [selectedHost, setSelectedHost] = useState(null);
-    let [showCicdData, setShowCicdData] = useState([]);
+    // let [showCicdData, setShowCicdData] = useState([]);
     const [selectedItems, setSelectedItems] = useState(null);
     const [globalFilter, setGlobalFilter] = useState(null);
     const [globalFilterStage, setGlobalFilterStage] = useState(null);
@@ -75,7 +79,7 @@ function Dashboard() {
     const [cicdDialog, setCicdDialog] = useState(false);
     const [stageDialog, setStageDialog] = useState(false);
     const [hostDialog, setHostDialog] = useState(false);
-    const [showCicdDialog, setShowCicdDialog] = useState(false);
+    // const [showCicdDialog, setShowCicdDialog] = useState(false);
     const [cicds, setCicds] = useState(null);
     const [deleteCicdDialog, setDeleteCicdDialog] = useState(false);
     const [deleteCicdStageDialog, setDeleteCicdStageDialog] = useState(false);
@@ -90,8 +94,6 @@ function Dashboard() {
     let loadHost = async () => {
         setHost(await _getAllHost())
     };
-
-
 
     useEffect(() => {
         let token = localStorage.getItem('token');
@@ -131,7 +133,7 @@ function Dashboard() {
     };
 
     let openNewHost = () => {
-        setCicd(emptyHost);
+        setStage(emptyHost);
         setSubmitted(false);
         setHostDialog(true);
     };
@@ -145,23 +147,30 @@ function Dashboard() {
 
     const hideDeleteCicdDialog = () => {
         setDeleteCicdDialog(false);
+    };
+
+    const hideDeleteCicStagedDialog = () => {
         setDeleteCicdStageDialog(false);
     };
 
-    const hideDeleteCicdsDialog = () => {
-        setDeleteCicdsDialog(false);
-    };
+    // const hideDeleteCicdsDialog = () => {
+    //     setDeleteCicdsDialog(false);
+    // };
 
     const hideDialog = () => {
-        setSubmitted(false);
+        setSubmitted(false)
         setCicdDialog(false);
-        setHostDialog(false);
-        setStageDialog(false);
-        setShowCicdDialog(false);
+        // setShowCicdDialog(false);
     };
 
     const hideStageDialog = () => {
+        setSubmitted(false);
         setStageDialog(false);
+    };
+
+    const hideHostDialog = () => {
+        setSubmitted(false);
+        setHostDialog(false);
     };
 
     const deleteCicdItem = (rowData) => {
@@ -237,7 +246,7 @@ function Dashboard() {
         let resData = await _testOutput.json();
         // console.log(resData)
         let stageWindow = window.open("", "", "toolbar=yes,scrollbars=yes,resizable=yes,top=800,left=1000,width=800,height=300");
-        stageWindow.document.write(resData.output.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+        stageWindow.document.write(resData.output.replace(/(?:\r\n|\r|\n,|\n|,)/g, '<br>'));
 
         await loadData();
     };
@@ -365,16 +374,16 @@ function Dashboard() {
     );
     const hostDialogFooter = (
         <React.Fragment>
-            <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
+            <Button label="Cancel" icon="pi pi-times" outlined onClick={hideHostDialog} />
             <Button label="Save" icon="pi pi-check" onClick={saveHost} />
         </React.Fragment>
     );
-    const showCicdDialogFooter = (
-        <React.Fragment>
-            <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-            {/* <Button label="Save" icon="pi pi-check" onClick={saveCicd} /> */}
-        </React.Fragment>
-    );
+    // const showCicdDialogFooter = (
+    //     <React.Fragment>
+    //         <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
+    //         {/* <Button label="Save" icon="pi pi-check" onClick={saveCicd} /> */}
+    //     </React.Fragment>
+    // );
     const deleteCicdDialogFooter = (
         <React.Fragment>
             <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteCicdDialog} />
@@ -384,17 +393,17 @@ function Dashboard() {
 
     const deleteCicdStageDialogFooter = (
         <React.Fragment>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteCicdDialog} />
+            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteCicStagedDialog} />
             <Button label="Yes" icon="pi pi-check" severity="danger" onClick={deleteCicdStage} />
         </React.Fragment>
     );
 
-    const deleteCicdsDialogFooter = (
-        <React.Fragment>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteCicdsDialog} />
-            <Button label="Yes" icon="pi pi-check" severity="danger" onClick={deleteSelectedCicds} />
-        </React.Fragment>
-    );
+    // const deleteCicdsDialogFooter = (
+    //     <React.Fragment>
+    //         <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteCicdsDialog} />
+    //         <Button label="Yes" icon="pi pi-check" severity="danger" onClick={deleteSelectedCicds} />
+    //     </React.Fragment>
+    // );
 
     const confirmDeleteSelected = () => {
         setDeleteCicdsDialog(true);
@@ -481,17 +490,17 @@ function Dashboard() {
         let date = new Date(cicdData.createdAt).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
         return date;
     }
-    const startTime = (showCicdData) => {
-        let date = new Date(showCicdData.startTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
-        return date;
-    }
-    const endTime = (showCicdData) => {
-        let date = new Date(showCicdData.endTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
-        return date;
-    }
+    // const startTime = (showCicdData) => {
+    //     let date = new Date(showCicdData.startTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
+    //     return date;
+    // }
+    // const endTime = (showCicdData) => {
+    //     let date = new Date(showCicdData.endTime).toLocaleString("en-US", { timeZone: "America/New_York", timeStyle: "short", dateStyle: "short" });
+    //     return date;
+    // }
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Manage Cicds</h4>
+            <h4 className="m-0">Cicds</h4>
             <span className="p-input-icon-left">
                 <i className="pi pi-search" />
                 <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Search..." />
@@ -501,7 +510,7 @@ function Dashboard() {
 
     const headerStage = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Manage Stages</h4>
+            <h4 className="m-0">Stages</h4>
             <span className="p-input-icon-left">
                 <i className="pi pi-search" />
                 <InputText type="search" onInput={(e) => setGlobalFilterStage(e.target.value)} placeholder="Search..." />
@@ -509,13 +518,22 @@ function Dashboard() {
         </div>
     );
 
-    const onInputChange = (e, itemName) => {
+    const onInputCicdNameChange = (e, itemName) => {
         const val = (e.target && e.target.value) || '';
         let _cicd = { ...cicd };
 
         _cicd[`${itemName}`] = val;
 
         setCicd(_cicd);
+    };
+
+    const onInputHostNameChange = (e, hostName) => {
+        const val = (e.target && e.target.value) || '';
+        let _host = { ...host };
+
+        _host[`${hostName}`] = val;
+
+        setHost(_host);
     };
 
     const stageChange = (e, stageData) => {
@@ -538,13 +556,13 @@ function Dashboard() {
         setSelectedHost(val)
     };
 
-    const removeStageRow = (index) => {
-        cicd.cicdStages.splice(index, 1);
-    }
+    // const removeStageRow = (index) => {
+    //     cicd.cicdStages.splice(index, 1);
+    // }
 
-    const addStageRow = () => {
-        cicd.cicdStages.push({});
-    }
+    // const addStageRow = () => {
+    //     cicd.cicdStages.push({});
+    // }
     // const footer = `In total there are ${cicdData ? cicdData.length : 0} cicds.`;
 
     return (
@@ -570,10 +588,10 @@ function Dashboard() {
                 <Dialog visible={cicdDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>
                     <div className="field">
                         <label htmlFor="name" className="font-bold">
-                            Name
+                            Cicd Name
                         </label>
-                        <InputText id="name" value={cicd.itemName} onChange={(e) => onInputChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
-                        {submitted && !cicd.itemName && <small className="p-error">Name is required.</small>}
+                        <InputText id="name" value={cicd.itemName} onChange={(e) => onInputCicdNameChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
+                        {submitted && !cicd.itemName && <small className="p-error">Cicd Name is required.</small>}
                         <div className="card">
                             <Toolbar className="mb-4" left={leftToolbarStageTemplate}></Toolbar>
 
@@ -593,7 +611,7 @@ function Dashboard() {
                     </div>
                 </Dialog>
 
-                <Dialog visible={stageDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Add Stage" modal className="p-fluid" footer={cicdStageDialogFooter} onHide={hideDialog}>
+                <Dialog visible={stageDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Add Stage" modal className="p-fluid" footer={cicdStageDialogFooter} onHide={hideStageDialog}>
                     <div className="field">
                         <div className="card">
                             <label htmlFor="integer" className="font-bold block mb-2">
@@ -646,36 +664,55 @@ function Dashboard() {
                     </div>
                 </Dialog>
 
-                {/* <Dialog visible={deleteCicdsDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdsDialogFooter} onHide={hideDeleteCicdsDialog}>
+                <Dialog visible={deleteCicdStageDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdStageDialogFooter} onHide={hideDeleteCicStagedDialog}>
                     <div className="confirmation-content">
                         <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                        {cicd && <span>Are you sure you want to delete the selected cicds?</span>}
-                    </div>
-                </Dialog> */}
-
-                <Dialog visible={deleteCicdStageDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdStageDialogFooter} onHide={hideDeleteCicdDialog}>
-                    <div className="confirmation-content">
-                        <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                        {cicd && <span>Are you sure you want to delete the selected cicds?</span>}
+                        {cicd && <span>Are you sure you want to delete the selected stage?</span>}
                     </div>
                 </Dialog>
 
-                <Dialog visible={showCicdDialog} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}>
-                    <div>
-                        <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
-                            dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
-                            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
-                            <Column selectionMode="single" exportable={false}></Column>
-                            <Column field="buildNumber" header="Build No." sortable style={{ minWidth: '5rem' }}></Column>
+                <Dialog visible={hostDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Add Host" modal className="p-fluid" footer={hostDialogFooter} onHide={hideHostDialog}>
+                <div className="field">
+                        <label htmlFor="hostName" className="font-bold">
+                            Host Name
+                        </label>
+                        <InputText id="hostName" value={host.hostName} onChange={(e) => onInputHostNameChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !host.hostName })} />
+                        {submitted && !host.hostName && <small className="p-error">Host Name is required.</small>}
+                        <div className="card">
+                            <Toolbar className="mb-4" left={leftToolbarStageTemplate}></Toolbar>
+
+                            {/* <DataTable value={stage} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)}
+                                paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
+                                paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Stages" globalFilter={globalFilterStage} header={headerStage}> */}
+                                {/* <Column selectionMode="multiple" exportable={false}></Column> */}
+                                {/* <Column field="stageName" header="Name" sortable style={{ minWidth: '16rem' }}></Column> */}
+                                {/* <Column field="remoteHost" header="Remote Host" sortable style={{ minWidth: '16rem' }}></Column> */}
+                                {/* <Column field="command" header="Command" sortable style={{ minWidth: '16rem' }}></Column> */}
+                                {/* <Column field={updated} header="Updated" sortable></Column>
+                                <Column field={created} header="Created" sortable></Column> */}
+                                {/* <Column header="Action" body={actionStageBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column> */}
+                            {/* </DataTable> */}
+                        </div>
+                    </div>
+                </Dialog>
+
+                {/* <Dialog visible={showCicdDialog} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Cicd Details" modal className="p-fluid" footer={showCicdDialogFooter} onHide={hideDialog}> */}
+                    {/* <div> */}
+                        {/* <DataTable value={showCicdData} selection={selectedItems} onSelectionChange={(e) => setSelectedItems(e.value)} */}
+                            {/* dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]} */}
+                            {/* paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown" */}
+                            {/* currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}> */}
+                            {/* <Column selectionMode="single" exportable={false}></Column> */}
+                            {/* <Column field="buildNumber" header="Build No." sortable style={{ minWidth: '5rem' }}></Column> */}
                             {/* <Column field="buildNumber" header="Name" sortable style={{ minWidth: '16rem' }}></Column> */}
-                            <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
-                            <Column field={startTime} header="Start" sortable></Column>
-                            <Column field={endTime} header="End" sortable></Column>
-                            <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
-                        </DataTable>
-                    </div>
-                </Dialog>
+                            {/* <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column> */}
+                            {/* <Column field={startTime} header="Start" sortable></Column> */}
+                            {/* <Column field={endTime} header="End" sortable></Column> */}
+                            {/* <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column> */}
+                        {/* </DataTable> */}
+                    {/* </div> */}
+                {/* </Dialog> */}
 
             </div>
         </>

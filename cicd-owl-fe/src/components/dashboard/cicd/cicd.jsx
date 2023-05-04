@@ -64,6 +64,8 @@ export default function Cicd(props) {
         if (logs[0]) {
             // console.log(logs);
             let cicdWindow = window.open("", "", "toolbar=yes,scrollbars=yes,resizable=yes,top=1000,left=1000,width=1000,height=1000");
+            // let finalString = (logs[0].replace(/(?:\r\n|\r|\n,|\n)/g, '<br>'))
+            // console.log(finalString)
             cicdWindow.document.write(logs[0].replace(/(?:\r\n|\r|\n)/g, '<br>'));
         }
 

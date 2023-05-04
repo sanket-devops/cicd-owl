@@ -146,6 +146,21 @@ async function _getAllHost() {
   return data
 }
 
+// Save New Host
+async function _saveHost(data) {
+  // console.log("Save Data: " + JSON.stringify(data));
+  fetch(API_ENDPOINT + '/hosts/host-save', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": data
+    })
+  })
+}
+
 // Update HOST
 async function _updateHost(data) {
   fetch(API_ENDPOINT + '/hosts/update', {
@@ -175,5 +190,5 @@ async function _deleteHost(data) {
   })
 }
 
-export { userLogin, _getAllCicd, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _updateHost, _deleteHost };
+export { userLogin, _getAllCicd, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost };
 

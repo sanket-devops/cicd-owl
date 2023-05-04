@@ -460,6 +460,8 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
 
           conn.exec(command, async (err: any, stream: any) => {
             if (err) throw err;
+            let stdout = "",
+            stderr = '';
             stream
               .on("close", async (code: any, signal: any) => {
                 outputCode = await code;
@@ -486,11 +488,13 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
               })
               .on("data", async (data: any) => {
                 // console.log('STDOUT: ' + data);
-                output.push(await data);
+                
+                output.push('' + data);
+                console.log('' + data);
               })
               .stderr.on("data", async (data: any) => {
                 // console.log('STDERR: ' + data);
-                output.push(await data);
+                output.push(stderr += data);
               });
           });
         })
