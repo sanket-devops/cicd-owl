@@ -4,9 +4,9 @@ import cors from "@fastify/cors";
 import mongoose from "mongoose";
 import WebSocket, { CLOSING, WebSocketServer } from "ws";
 import { setInterval } from "timers";
-import Queue from "./services/Queue"
+import Queue from "./services/Queue";
 
-var Stream = require('stream');
+var Stream = require("stream");
 const { Client } = require("ssh2");
 const fastify = Fastify();
 fastify.register(cors, {
@@ -21,6 +21,7 @@ const hostModel = require("./models/host.model");
 const cicdModel = require("./models/cicd.model");
 const buildQueue = new Queue();
 let buildRunning: boolean = false;
+let currentbuildItem: any = undefined;
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
 mongoose.set("strictQuery", true);
@@ -34,7 +35,6 @@ mongoose
     console.log(`MongoDB Connected: ${db}`);
   })
   .catch(console.error);
-
 
 app.listen({ port: port, host: hostname }, function () {
   console.log(`Cicd-Owl-Api listen at : http://${hostname}:${port}`);
@@ -359,17 +359,18 @@ app.post("/hosts/host-delete", async (req: any, res) => {
 /////////////////////////////////////////////////////////////////////
 
 setInterval(() => {
-  if ((buildQueue.size()) && (!buildRunning)) {
+  if (buildQueue.size() && !buildRunning) {
     ssh();
   }
 }, 1000);
 
 async function ssh() {
-  let buildData = buildQueue.front();
-  buildRunning = true;
-  console.log("Build Started: => \n", buildData)
-  let cicdStages = buildData.cicdStages;
-  let id = buildData.id;
+  currentbuildItem = buildQueue.front();
+  buildQueue.dequeue();
+  buildRunning = true; 
+  // console.log("Build Started: => \n", buildData);
+  let cicdStages = currentbuildItem.cicdStages;
+  let id = currentbuildItem.id;
 
   let cicd = await cicdModel.cicdData.findOne({ _id: id });
   cicd.status = "running";
@@ -461,7 +462,6 @@ async function ssh() {
     new: true,
     runValidator: true,
   });
-  buildQueue.dequeue();
   buildRunning = false;
   return await cicd;
 }
@@ -477,7 +477,7 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
       conn
         .on("ready", async () => {
           console.log("Client :: Ready Command is:\n" + command);
-          
+
           conn.exec(command, async (err: any, stream: any) => {
             if (err) throw err;
             stream
@@ -506,11 +506,11 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
               })
               .on("data", (data: any) => {
                 // console.log('STDOUT: ' + data);
-                chunks.push(data)
+                chunks.push(data);
               });
             stream
               .on("end", () => {
-                output.push((Buffer.concat(chunks)).toString());
+                output.push(Buffer.concat(chunks).toString());
               })
               .stderr.on("data", async (data: any) => {
                 // console.log('STDERR: ' + data);
@@ -535,22 +535,36 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
 
 /////////////////////////////////////////////////////////////////////
 
+//GET Build Queue
+app.get("/cicds/build-queue", async (req, res) => {
+  try {
+    res.send(buildQueue);
+  } catch (e) {
+    res.status(500);
+  }
+});
+
+//GET Current Build Item
+app.get("/cicds/current-build-item", async (req, res) => {
+  try {
+    res.send(currentbuildItem);
+  } catch (e) {
+    res.status(500);
+  }
+});
+
 // POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {
   try {
     let body = JSON.parse(JSON.stringify(req.body.data));
-    console.log(buildQueue);
-    console.log(buildQueue.front());
-      buildQueue.enqueue(body);
-    // let output = await ssh(body.cicdStages, body.id);
-    res.send("done.");
+    buildQueue.enqueue(body);
+    res.send(buildQueue);
   } catch (e: any) {
     console.log(e);
     res.status(500);
     res.send({ message: e.message });
   }
 });
-
 
 // POST Connect SSH and store output in cicdStagesOutput using _id
 app.post("/connect/ssh/test", async (req: any, res) => {
