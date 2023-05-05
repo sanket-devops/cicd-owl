@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import mongoose from "mongoose";
 import WebSocket, { CLOSING, WebSocketServer } from "ws";
 import { setInterval } from "timers";
+import Queue from "./services/Queue"
 
 var Stream = require('stream');
 const { Client } = require("ssh2");
@@ -18,6 +19,8 @@ const app = fastify;
 const userModel = require("./models/user.model");
 const hostModel = require("./models/host.model");
 const cicdModel = require("./models/cicd.model");
+const buildQueue = new Queue();
+let buildRunning: boolean = false;
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
 mongoose.set("strictQuery", true);
@@ -31,6 +34,7 @@ mongoose
     console.log(`MongoDB Connected: ${db}`);
   })
   .catch(console.error);
+
 
 app.listen({ port: port, host: hostname }, function () {
   console.log(`Cicd-Owl-Api listen at : http://${hostname}:${port}`);
@@ -354,7 +358,19 @@ app.post("/hosts/host-delete", async (req: any, res) => {
 
 /////////////////////////////////////////////////////////////////////
 
-async function ssh(cicdStages: any, id: any) {
+setInterval(() => {
+  if ((buildQueue.size()) && (!buildRunning)) {
+    ssh();
+  }
+}, 1000);
+
+async function ssh() {
+  let buildData = buildQueue.front();
+  buildRunning = true;
+  console.log("Build Started: => \n", buildData)
+  let cicdStages = buildData.cicdStages;
+  let id = buildData.id;
+
   let cicd = await cicdModel.cicdData.findOne({ _id: id });
   cicd.status = "running";
   let buildNumber = cicd.cicdStagesOutput.length + 1;
@@ -445,6 +461,8 @@ async function ssh(cicdStages: any, id: any) {
     new: true,
     runValidator: true,
   });
+  buildQueue.dequeue();
+  buildRunning = false;
   return await cicd;
 }
 
@@ -521,8 +539,11 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
 app.post("/connect/ssh", async (req: any, res) => {
   try {
     let body = JSON.parse(JSON.stringify(req.body.data));
-    let output = await ssh(body.cicdStages, body.id);
-    res.send(output);
+    console.log(buildQueue);
+    console.log(buildQueue.front());
+      buildQueue.enqueue(body);
+    // let output = await ssh(body.cicdStages, body.id);
+    res.send("done.");
   } catch (e: any) {
     console.log(e);
     res.status(500);
