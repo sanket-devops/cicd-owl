@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import WebSocket, { CLOSING, WebSocketServer } from "ws";
 import { setInterval } from "timers";
 
+var Stream = require('stream');
 const { Client } = require("ssh2");
 const fastify = Fastify();
 fastify.register(cors, {
@@ -449,6 +450,7 @@ async function ssh(cicdStages: any, id: any) {
 
 async function sshConnect(host: any, command: string, connEnd: boolean) {
   let output: any = [];
+  const chunks: any = [];
   let outputCode: number = -1;
   let conn = new Client();
   let resDataPromiseArr: any = [];
@@ -457,11 +459,9 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
       conn
         .on("ready", async () => {
           console.log("Client :: Ready Command is:\n" + command);
-
+          
           conn.exec(command, async (err: any, stream: any) => {
             if (err) throw err;
-            let stdout = "",
-            stderr = '';
             stream
               .on("close", async (code: any, signal: any) => {
                 outputCode = await code;
@@ -486,15 +486,17 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
                   conn.end();
                 }
               })
-              .on("data", async (data: any) => {
+              .on("data", (data: any) => {
                 // console.log('STDOUT: ' + data);
-                
-                output.push('' + data);
-                console.log('' + data);
+                chunks.push(data)
+              });
+            stream
+              .on("end", () => {
+                output.push((Buffer.concat(chunks)).toString());
               })
               .stderr.on("data", async (data: any) => {
                 // console.log('STDERR: ' + data);
-                output.push(stderr += data);
+                chunks.push(data);
               });
           });
         })
@@ -528,6 +530,7 @@ app.post("/connect/ssh", async (req: any, res) => {
   }
 });
 
+
 // POST Connect SSH and store output in cicdStagesOutput using _id
 app.post("/connect/ssh/test", async (req: any, res) => {
   try {
@@ -538,7 +541,6 @@ app.post("/connect/ssh/test", async (req: any, res) => {
       });
       let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/testTemp && cd ${await host.hostPath}/cicd-owl/testTemp`;
       let sshCommand = _cicdHostPath + " && " + body.command;
-      // console.log(sshCommand);
       let connEnd = true;
       let output = await sshConnect(host, sshCommand, connEnd);
       res.send({
