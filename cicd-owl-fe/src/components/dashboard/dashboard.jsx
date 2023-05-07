@@ -3,16 +3,18 @@ import './dashboard.css'
 import { Navigate, Route, Routes, useNavigate, Link } from "react-router-dom";
 import { classNames } from 'primereact/utils';
 import { DataTable } from 'primereact/datatable';
+import { DataView } from 'primereact/dataview';
 import { Toolbar } from 'primereact/toolbar';
 import { Column } from 'primereact/column';
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from 'primereact/inputtextarea';
+import { OrderList } from 'primereact/orderlist';
 import { Dropdown } from 'primereact/dropdown';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { _getAllCicd, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
+import { _getAllCicd, _getBuildQueue, _getCurrentBuild, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 import useWebSocket from 'react-use-websocket';
 
 
@@ -56,6 +58,8 @@ function Dashboard() {
     const navigate = useNavigate();
     const toast = useRef(null);
     const [cicdData, setCicdData] = useState([]);
+    const [cicdBuildQueue, setCicdBuildQueue] = useState([]);
+    const [currentBuildData, setCurrentBuildData] = useState([]);
     const [hostData, setHostData] = useState([]);
     const [selectedHost, setSelectedHost] = useState(null);
     const [selectedItems, setSelectedItems] = useState(null);
@@ -77,6 +81,9 @@ function Dashboard() {
 
     let loadData = async () => {
         setCicdData(await _getAllCicd());
+        setCicdBuildQueue(await _getBuildQueue());
+        setCurrentBuildData(await _getCurrentBuild());
+        // console.log(cicdBuildQueue)
     };
     let loadHost = async () => {
         setHostData(await _getAllHost())
@@ -229,10 +236,8 @@ function Dashboard() {
     };
 
     const runCicd = async (rowData) => {
-        let body = {
-            "id": rowData._id,
-            "cicdStages": rowData.cicdStages
-        }
+        // console.log(rowData)
+        let body = rowData
         _runCicd(body);
         setTimeout(async () => {
             await loadData();
@@ -555,6 +560,47 @@ function Dashboard() {
         setSelectedHost(val)
     };
 
+    const buildQueue = (build) => {
+        return (
+            // <div className="flex flex-wrap p-2 align-items-center gap-3">
+                <div key={build._id} className="flex-1 flex flex-column gap-2 xl:mr-8">
+                    <span className="font-bold">{build.itemName}</span>
+                    <div className="flex align-items-center gap-2">
+                        <i className="pi pi-tag text-sm"></i>
+                        {/* <span>{build.itemName}</span> */}
+                    </div>
+                    <span className="font-bold text-900">${build._id}</span>
+                </div>
+            // </div>
+        );
+    };
+
+    const currentBuild = (hostData) => {
+        return (
+            <div className="col-8">
+            <div className="flex flex-column xl:flex-row xl:align-items-start p-1 gap-1">
+                {/* <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4"> */}
+                    <div className="flex flex-column align-items-center sm:align-items-start gap-3">
+                        <div className="text-2xl font-bold text-900">{hostData.hostName}</div>
+                        {/* <Rating value={product.rating} readOnly cancel={false}></Rating> */}
+                        <div className="flex align-items-center gap-3">
+                            <span className="flex align-items-center gap-2">{"hello"}
+                                <i className="pi pi-tag"></i>
+                                {/* <span className="font-semibold">{product.category}</span> */}
+                            </span>
+                            {/* <Tag value={product.inventoryStatus} severity={getSeverity(product)}></Tag> */}
+                        </div>
+                    </div>
+                    <div className="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
+                        {/* <span className="text-2xl font-semibold">${product.price}</span> */}
+                        {/* <Button icon="pi pi-shopping-cart" className="p-button-rounded" disabled={product.inventoryStatus === 'OUTOFSTOCK'}></Button> */}
+                    </div>
+                {/* </div> */}
+            </div>
+        </div>
+        )
+    }
+
     return (
         <>
             <div>
@@ -562,17 +608,23 @@ function Dashboard() {
                 <div className="card">
                     <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
                     <h1>CICD-Dashboard</h1>
-                    <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
-                        dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
-                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
-                        <Column selectionMode="single" exportable={false}></Column>
-                        <Column field="itemName" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
-                        <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
-                        <Column field={updated} header="Updated" sortable></Column>
-                        <Column field={created} header="Created" sortable></Column>
-                        <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
-                    </DataTable>
+                    <div className="card xl:flex xl:justify-content-center">
+                        <div>
+                            <OrderList value={cicdBuildQueue} onChange={(e) => setCicdBuildQueue(e.value)} itemTemplate={buildQueue} header="Products" filter filterBy="itemName"></OrderList>
+                            <DataView value={hostData} itemTemplate={currentBuild} />
+                        </div>
+                        <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
+                            dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
+                            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} cicds" globalFilter={globalFilter} header={header}>
+                            <Column selectionMode="single" exportable={false}></Column>
+                            <Column field="itemName" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
+                            <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
+                            <Column field={updated} header="Updated" sortable></Column>
+                            <Column field={created} header="Created" sortable></Column>
+                            <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
+                        </DataTable>
+                    </div>
                 </div>
 
                 <Dialog visible={cicdDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={cicdDialogFooter} onHide={hideDialog}>

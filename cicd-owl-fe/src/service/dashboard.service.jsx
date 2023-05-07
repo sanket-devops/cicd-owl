@@ -39,6 +39,27 @@ async function validateToken(token) {
   return data
 }
 
+// Get Build Queue Items
+async function _getBuildQueue() {
+  let data = undefined;
+  await fetch(API_ENDPOINT + '/cicds/build-queue').then(res => res.json()).then((res) => {
+    data = res.items;
+  });
+  return data
+}
+// Get Current Build Item
+async function _getCurrentBuild() {
+  let data = undefined;
+  try {
+    await fetch(API_ENDPOINT + '/cicds/current-build-item').then(res => res.json()).then((res) => {
+        data = res;
+    });
+    return data
+  } catch (error) {
+    return data = {"itemName": "No build is running."}
+  }
+}
+
 // Get All CICD Items
 async function _getAllCicd() {
   let data = undefined;
@@ -190,5 +211,5 @@ async function _deleteHost(data) {
   })
 }
 
-export { userLogin, _getAllCicd, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost };
+export { userLogin, _getAllCicd, _getBuildQueue, _getCurrentBuild, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost };
 

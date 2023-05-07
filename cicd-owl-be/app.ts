@@ -370,7 +370,7 @@ async function ssh() {
   buildRunning = true; 
   // console.log("Build Started: => \n", buildData);
   let cicdStages = currentbuildItem.cicdStages;
-  let id = currentbuildItem.id;
+  let id = currentbuildItem._id;
 
   let cicd = await cicdModel.cicdData.findOne({ _id: id });
   cicd.status = "running";
