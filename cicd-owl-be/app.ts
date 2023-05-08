@@ -21,14 +21,13 @@ const hostModel = require("./models/host.model");
 const cicdModel = require("./models/cicd.model");
 const buildQueue = new Queue();
 let buildRunning: boolean = false;
-let currentbuildItem: any = undefined;
-let emptyBuildItem: any = {
+let currentbuildItem: any = {
   itemName: "",
   status: "",
   stageName: "",
   remoteHost: "",
   buildNumber: 0,
-  command: ""
+  command: "",
 };
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
@@ -374,7 +373,6 @@ setInterval(() => {
 
 async function ssh() {
   try {
-    currentbuildItem = emptyBuildItem;
     let buildItem = buildQueue.front();
     buildQueue.dequeue();
     buildRunning = true;
@@ -464,7 +462,6 @@ async function ssh() {
               _stageLogs.endTime = Date.now();
               _cicdStageOutput.cicdStageOutput.push(_stageLogs);
               // stageData = await _cicdStageOutput;
-              currentbuildItem = undefined;
               resolve();
             })
           );
@@ -521,7 +518,15 @@ async function ssh() {
   } catch (error) {
     console.log(error);
   }
-  console.log("test logs");
+
+  currentbuildItem = {
+    itemName: "",
+    status: "",
+    stageName: "",
+    remoteHost: "",
+    buildNumber: 0,
+    command: "",
+  };
 }
 
 async function sshConnect(host: any, command: string, connEnd: boolean) {
@@ -605,11 +610,7 @@ app.get("/cicds/build-queue", async (req, res) => {
 //GET Current Build Item
 app.get("/cicds/current-build-item", async (req, res) => {
   try {
-    if (currentbuildItem) {
-      res.send(currentbuildItem);
-    } else {
-      res.send(emptyBuildItem);
-    }
+    res.send(currentbuildItem);
   } catch (e) {
     res.status(500);
   }
