@@ -483,6 +483,9 @@ function Dashboard() {
             case 'running':
                 return 'info';
 
+            case 'queue':
+                return 'help';
+
             case 'stoped':
                 return 'warning';
 
@@ -563,28 +566,43 @@ function Dashboard() {
     const buildQueue = (build) => {
         return (
             // <div className="flex flex-wrap p-2 align-items-center gap-3">
-                <div key={build._id} className="flex-1 flex flex-column gap-2 xl:mr-8">
-                    <span className="font-bold">{build.itemName}</span>
-                    <div className="flex align-items-center gap-2">
-                        <i className="pi pi-tag text-sm"></i>
-                        {/* <span>{build.itemName}</span> */}
-                    </div>
-                    <span className="font-bold text-900">${build._id}</span>
+            <div key={build._id} className="flex-1 flex flex-column gap-2 xl:mr-8">
+                <span className="font-bold">{build.itemName}</span>
+                <div className="flex align-items-center gap-2">
+                    <i className="pi pi-tag text-sm"></i>
+                    {/* <span>{build.itemName}</span> */}
                 </div>
+                <span className="font-bold text-900">${build._id}</span>
+            </div>
             // </div>
         );
     };
 
+    // const Cbuild = () => {
+    //     if (currentBuildData === hostName) {
+    //         console.log(currentBuildData)
+    //     }
+
+    //     let hostItem = hostData.map((item) => 
+
+    //         <div key={item._id}>{item.hostName}</div>
+    //     )
+    //     return (
+    //         <div>{hostItem}</div>
+    //     )
+    // }
+
     const currentBuild = (hostData) => {
         return (
             <div className="col-8">
-            <div className="flex flex-column xl:flex-row xl:align-items-start p-1 gap-1">
-                {/* <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4"> */}
+                <div className="flex flex-column xl:flex-row xl:align-items-start p-1 gap-1">
+                    {/* <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4"> */}
                     <div className="flex flex-column align-items-center sm:align-items-start gap-3">
                         <div className="text-2xl font-bold text-900">{hostData.hostName}</div>
                         {/* <Rating value={product.rating} readOnly cancel={false}></Rating> */}
                         <div className="flex align-items-center gap-3">
-                            <span className="flex align-items-center gap-2">{"hello"}
+                            <span className="flex align-items-center gap-2">
+                                {currentBuildData.remoteHost === hostData.hostName ? currentBuildData.itemName : "Idle"}
                                 <i className="pi pi-tag"></i>
                                 {/* <span className="font-semibold">{product.category}</span> */}
                             </span>
@@ -595,9 +613,9 @@ function Dashboard() {
                         {/* <span className="text-2xl font-semibold">${product.price}</span> */}
                         {/* <Button icon="pi pi-shopping-cart" className="p-button-rounded" disabled={product.inventoryStatus === 'OUTOFSTOCK'}></Button> */}
                     </div>
-                {/* </div> */}
+                    {/* </div> */}
+                </div>
             </div>
-        </div>
         )
     }
 
@@ -612,6 +630,7 @@ function Dashboard() {
                         <div>
                             <OrderList value={cicdBuildQueue} onChange={(e) => setCicdBuildQueue(e.value)} itemTemplate={buildQueue} header="Products" filter filterBy="itemName"></OrderList>
                             <DataView value={hostData} itemTemplate={currentBuild} />
+                            {/* <Cbuild /> */}
                         </div>
                         <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
                             dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}

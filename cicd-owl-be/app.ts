@@ -22,6 +22,14 @@ const cicdModel = require("./models/cicd.model");
 const buildQueue = new Queue();
 let buildRunning: boolean = false;
 let currentbuildItem: any = undefined;
+let emptyBuildItem: any = {
+  itemName: "",
+  status: "",
+  stageName: "",
+  remoteHost: "",
+  buildNumber: 0,
+  command: ""
+};
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
 mongoose.set("strictQuery", true);
@@ -365,105 +373,155 @@ setInterval(() => {
 }, 1000);
 
 async function ssh() {
-  currentbuildItem = buildQueue.front();
-  buildQueue.dequeue();
-  buildRunning = true; 
-  // console.log("Build Started: => \n", buildData);
-  let cicdStages = currentbuildItem.cicdStages;
-  let id = currentbuildItem._id;
+  try {
+    currentbuildItem = emptyBuildItem;
+    let buildItem = buildQueue.front();
+    buildQueue.dequeue();
+    buildRunning = true;
+    // console.log("Build Started: => \n", buildData);
+    let cicdStages = buildItem.cicdStages;
+    let id = buildItem._id;
 
-  let cicd = await cicdModel.cicdData.findOne({ _id: id });
-  cicd.status = "running";
-  let buildNumber = cicd.cicdStagesOutput.length + 1;
+    let cicd = await cicdModel.cicdData.findOne({ _id: id });
+    cicd.status = "running";
+    let buildNumber = cicd.cicdStagesOutput.length + 1;
 
-  let _cicdStageOutput: any = {
-    buildNumber: buildNumber,
-    startTime: Date.now(),
-    endTime: null,
-    status: "running",
-    cicdStageOutput: [],
-  };
-  cicd.cicdStagesOutput.push(_cicdStageOutput);
-  let connEnd = false;
-  let output: any = undefined;
-  let hostPathWithGit: string = "";
-
-  for (let index = 0; index < cicdStages.length; index++) {
-    let _stageLogs: any = {
-      stageName: cicdStages[index].stageName,
+    let _cicdStageOutput: any = {
+      buildNumber: buildNumber,
       startTime: Date.now(),
       endTime: null,
       status: "running",
-      code: null,
-      logs: [],
+      cicdStageOutput: [],
     };
-    let host = await hostModel.hostData.findOne({
-      hostName: cicdStages[index].remoteHost,
-    });
-    let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/${await cicd.itemName} && cd ${await host.hostPath}/cicd-owl/${await cicd.itemName}`;
-    let sshCommand: string = "";
+    cicd.cicdStagesOutput.push(_cicdStageOutput);
+    let connEnd = false;
+    let output: any = undefined;
+    let hostPathWithGit: string = "";
 
-    if (cicdStages[index].command.includes("git")) {
-      var mySubString = cicdStages[index].command.substring(
-        cicdStages[index].command.lastIndexOf("/") + 1,
-        cicdStages[index].command.lastIndexOf(".git")
-      );
-      sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`;
-      hostPathWithGit = `${_cicdHostPath} && cd ${mySubString}`;
-    } else {
-      if (hostPathWithGit) {
-        sshCommand = `${hostPathWithGit} && ${cicdStages[index].command}`;
-      } else {
-        sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`;
-      }
-    }
-    if (output && output.code != 0) {
-      break;
-      // console.log(output.code)
-    } else {
-      if (index === cicdStages.length - 1) connEnd = true;
-      output = await sshConnect(await host, sshCommand, connEnd);
-      let resDataPromiseArr: any = [];
-      resDataPromiseArr.push(
-        new Promise(async (resolve: any, reject: any) => {
-          _stageLogs.logs.push(
-            await JSON.parse(JSON.stringify("" + output.output))
-            // await output.output
-          );
-          _stageLogs.code = output.code;
-          if (output.code === 0) {
-            _stageLogs.status = "success";
-            _cicdStageOutput.status = "success";
-          } else {
-            _stageLogs.status = "failed";
-            _cicdStageOutput.status = "failed";
-            cicd.status = "failed";
-          }
-          _stageLogs.endTime = Date.now();
-          _cicdStageOutput.cicdStageOutput.push(_stageLogs);
-          // stageData = await _cicdStageOutput;
-          resolve();
-        })
-      );
-      await Promise.all(resDataPromiseArr);
-      _cicdStageOutput.endTime = Date.now();
-    }
-    for (const stage of cicd.cicdStagesOutput) {
-      if (stage.buildNumber === buildNumber)
-        stage.cicdStageOutput.push(await _stageLogs);
-    }
+    currentbuildItem.itemName = buildNumber;
+    currentbuildItem.itemName = cicd.itemName;
+    currentbuildItem.status = "running";
     await cicdModel.cicdData.findOneAndUpdate({ _id: id }, cicd, {
       new: true,
       runValidator: true,
     });
+    for (let index = 0; index < cicdStages.length; index++) {
+      let _stageLogs: any = {
+        stageName: cicdStages[index].stageName,
+        startTime: Date.now(),
+        endTime: null,
+        status: "running",
+        code: null,
+        logs: [],
+      };
+      let host = await hostModel.hostData.findOne({
+        hostName: cicdStages[index].remoteHost,
+      });
+      if (host) {
+        currentbuildItem.stageName = cicdStages[index].stageName;
+        currentbuildItem.remoteHost = cicdStages[index].remoteHost;
+
+        let _cicdHostPath = `mkdir -p ${await host.hostPath}/cicd-owl/${await cicd.itemName} && cd ${await host.hostPath}/cicd-owl/${await cicd.itemName}`;
+        let sshCommand: string = "";
+
+        if (cicdStages[index].command.includes("git")) {
+          var mySubString = cicdStages[index].command.substring(
+            cicdStages[index].command.lastIndexOf("/") + 1,
+            cicdStages[index].command.lastIndexOf(".git")
+          );
+          sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`;
+          hostPathWithGit = `${_cicdHostPath} && cd ${mySubString}`;
+        } else {
+          if (hostPathWithGit) {
+            sshCommand = `${hostPathWithGit} && ${cicdStages[index].command}`;
+          } else {
+            sshCommand = `${_cicdHostPath} && ${cicdStages[index].command}`;
+          }
+        }
+        if (output && output.code != 0) {
+          break;
+          // console.log(output.code)
+        } else {
+          if (index === cicdStages.length - 1) connEnd = true;
+          currentbuildItem.command = sshCommand;
+          output = await sshConnect(await host, sshCommand, connEnd);
+          let resDataPromiseArr: any = [];
+          resDataPromiseArr.push(
+            new Promise(async (resolve: any, reject: any) => {
+              _stageLogs.logs.push(
+                await JSON.parse(JSON.stringify("" + output.output))
+                // await output.output
+              );
+              _stageLogs.code = output.code;
+              if (output.code === 0) {
+                _stageLogs.status = "success";
+                _cicdStageOutput.status = "success";
+              } else {
+                _stageLogs.status = "failed";
+                _cicdStageOutput.status = "failed";
+                cicd.status = "failed";
+              }
+              _stageLogs.endTime = Date.now();
+              _cicdStageOutput.cicdStageOutput.push(_stageLogs);
+              // stageData = await _cicdStageOutput;
+              currentbuildItem = undefined;
+              resolve();
+            })
+          );
+          await Promise.all(resDataPromiseArr);
+          _cicdStageOutput.endTime = Date.now();
+        }
+        for (const stage of cicd.cicdStagesOutput) {
+          if (stage.buildNumber === buildNumber)
+            stage.cicdStageOutput.push(await _stageLogs);
+        }
+        await cicdModel.cicdData.findOneAndUpdate({ _id: id }, cicd, {
+          new: true,
+          runValidator: true,
+        });
+      } else {
+        _stageLogs.logs.push("Host Not Found, Please Select Remote Host...");
+        _stageLogs.code = 1;
+
+        let resDataPromiseArr: any = [];
+        resDataPromiseArr.push(
+          new Promise(async (resolve: any, reject: any) => {
+            _stageLogs.status = "failed";
+            _cicdStageOutput.status = "failed";
+            cicd.status = "failed";
+
+            _stageLogs.endTime = Date.now();
+            _cicdStageOutput.cicdStageOutput.push(_stageLogs);
+            // stageData = await _cicdStageOutput;
+            resolve();
+          })
+        );
+        await Promise.all(resDataPromiseArr);
+        _cicdStageOutput.endTime = Date.now();
+
+        for (const stage of cicd.cicdStagesOutput) {
+          if (stage.buildNumber === buildNumber)
+            stage.cicdStageOutput.push(await _stageLogs);
+        }
+
+        await cicdModel.cicdData.findOneAndUpdate({ _id: id }, cicd, {
+          new: true,
+          runValidator: true,
+        });
+        break;
+      }
+    }
+    cicd.status = await _cicdStageOutput.status;
+    await cicdModel.cicdData.findOneAndUpdate({ _id: id }, cicd, {
+      new: true,
+      runValidator: true,
+    });
+    buildRunning = false;
+    // return await cicd;
+  } catch (error) {
+    console.log(error);
   }
-  cicd.status = await _cicdStageOutput.status;
-  await cicdModel.cicdData.findOneAndUpdate({ _id: id }, cicd, {
-    new: true,
-    runValidator: true,
-  });
-  buildRunning = false;
-  return await cicd;
+  console.log("test logs");
 }
 
 async function sshConnect(host: any, command: string, connEnd: boolean) {
@@ -547,7 +605,11 @@ app.get("/cicds/build-queue", async (req, res) => {
 //GET Current Build Item
 app.get("/cicds/current-build-item", async (req, res) => {
   try {
-    res.send(currentbuildItem);
+    if (currentbuildItem) {
+      res.send(currentbuildItem);
+    } else {
+      res.send(emptyBuildItem);
+    }
   } catch (e) {
     res.status(500);
   }
@@ -557,6 +619,11 @@ app.get("/cicds/current-build-item", async (req, res) => {
 app.post("/connect/ssh", async (req: any, res) => {
   try {
     let body = JSON.parse(JSON.stringify(req.body.data));
+    body.status = "queue";
+    await cicdModel.cicdData.findOneAndUpdate({ _id: body._id }, body, {
+      new: true,
+      runValidator: true,
+    });
     buildQueue.enqueue(body);
     res.send(buildQueue);
   } catch (e: any) {

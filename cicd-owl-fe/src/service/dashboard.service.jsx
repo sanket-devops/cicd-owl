@@ -56,7 +56,6 @@ async function _getCurrentBuild() {
     });
     return data
   } catch (error) {
-    return data = {"itemName": "No build is running."}
   }
 }
 
