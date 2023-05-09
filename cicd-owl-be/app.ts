@@ -22,6 +22,7 @@ const cicdModel = require("./models/cicd.model");
 const buildQueue = new Queue();
 let buildRunning: boolean = false;
 let currentbuildItem: any = {
+  _id: "",
   itemName: "",
   status: "",
   stageName: "",
@@ -29,6 +30,7 @@ let currentbuildItem: any = {
   buildNumber: 0,
   command: "",
 };
+let currentbuildStop: boolean = false;
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
 mongoose.set("strictQuery", true);
@@ -396,7 +398,8 @@ async function ssh() {
     let output: any = undefined;
     let hostPathWithGit: string = "";
 
-    currentbuildItem.itemName = buildNumber;
+    currentbuildItem._id = id;
+    currentbuildItem.buildNumber = buildNumber;
     currentbuildItem.itemName = cicd.itemName;
     currentbuildItem.status = "running";
     await cicdModel.cicdData.findOneAndUpdate({ _id: id }, cicd, {
@@ -442,7 +445,7 @@ async function ssh() {
         } else {
           if (index === cicdStages.length - 1) connEnd = true;
           currentbuildItem.command = sshCommand;
-          output = await sshConnect(await host, sshCommand, connEnd);
+          output = await sshConnect(await host, sshCommand, connEnd, id);
           let resDataPromiseArr: any = [];
           resDataPromiseArr.push(
             new Promise(async (resolve: any, reject: any) => {
@@ -466,7 +469,6 @@ async function ssh() {
             })
           );
           await Promise.all(resDataPromiseArr);
-          _cicdStageOutput.endTime = Date.now();
         }
         for (const stage of cicd.cicdStagesOutput) {
           if (stage.buildNumber === buildNumber)
@@ -505,7 +507,6 @@ async function ssh() {
           new: true,
           runValidator: true,
         });
-        break;
       }
     }
     cicd.status = await _cicdStageOutput.status;
@@ -520,6 +521,7 @@ async function ssh() {
   }
 
   currentbuildItem = {
+    _id: "",
     itemName: "",
     status: "",
     stageName: "",
@@ -529,7 +531,7 @@ async function ssh() {
   };
 }
 
-async function sshConnect(host: any, command: string, connEnd: boolean) {
+async function sshConnect(host: any, command: string, connEnd: boolean, id?: any) {
   let output: any = [];
   const chunks: any = [];
   let outputCode: number = -1;
@@ -556,9 +558,19 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
                       ")"
                   );
                   conn.end();
-                } else if ((await code) != 0) {
+                } else if ((await code) >= 0) {
                   console.log(
                     "Connection End: Last Command Failed => (code: " +
+                      (await code) +
+                      ", signal: " +
+                      (await signal) +
+                      ")"
+                  );
+                  conn.end();
+                }
+                else {
+                  console.log(
+                    "Connection End: Build Stopped By User => (code: " +
                       (await code) +
                       ", signal: " +
                       (await signal) +
@@ -613,6 +625,51 @@ app.get("/cicds/current-build-item", async (req, res) => {
     res.send(currentbuildItem);
   } catch (e) {
     res.status(500);
+  }
+});
+
+//GET cancel Current Build Item
+app.post("/cicds/cancel-current-build-item", async (req: any, res) => {
+  try {
+    // let body = JSON.parse(JSON.stringify(req.body.data));
+    // let cicd = await cicdModel.cicdData.findOne({ _id: body._id });
+    // // console.log(body);
+    // cicd.status = "stoped";
+    // for (const build of cicd.cicdStagesOutput) {
+    //   if (body.buildNumber === build.buildNumber) {
+    //     // console.log(build.buildNumber);
+    //     build.status = "stoped";
+    //     for (const stage of build.cicdStageOutput) {
+    //       if (body.stageName === stage.stageName) {
+    //         console.log(stage.stageName);
+    //         stage.status = "stoped";
+    //         currentbuildItem = {
+    //           _id: "",
+    //           itemName: "",
+    //           status: "",
+    //           stageName: "",
+    //           remoteHost: "",
+    //           buildNumber: 0,
+    //           command: "",
+    //         };
+    //       }
+    //     }
+    //   }
+    // }
+
+    // console.log(cicd);
+    currentbuildStop = true;
+    // await cicdModel.cicdData.findOneAndUpdate({ _id: body._id }, cicd, {
+    //   new: true,
+    //   runValidator: true,
+    // });
+    // conn.end();
+    res.send("build Stop");
+    // buildQueue.enqueue(body);
+  } catch (e: any) {
+    console.log(e);
+    res.status(500);
+    res.send({ message: e.message });
   }
 });
 

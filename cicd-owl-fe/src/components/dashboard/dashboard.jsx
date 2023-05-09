@@ -14,7 +14,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { _getAllCicd, _getBuildQueue, _getCurrentBuild, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
+import { _getAllCicd, _getBuildQueue, _getCurrentBuild, _currentBuildStop, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 import useWebSocket from 'react-use-websocket';
 
 
@@ -83,7 +83,6 @@ function Dashboard() {
         setCicdData(await _getAllCicd());
         setCicdBuildQueue(await _getBuildQueue());
         setCurrentBuildData(await _getCurrentBuild());
-        // console.log(cicdBuildQueue)
     };
     let loadHost = async () => {
         setHostData(await _getAllHost())
@@ -563,38 +562,30 @@ function Dashboard() {
         setSelectedHost(val)
     };
 
+    const cancelCurrentBuild = () => {
+        _currentBuildStop(currentBuildData)
+        // console.log(currentBuildData);
+    }
+
     const buildQueue = (build) => {
         return (
-            // <div className="flex flex-wrap p-2 align-items-center gap-3">
-            <div key={build._id} className="flex-1 flex flex-column gap-2 xl:mr-8">
-                <span className="font-bold">{build.itemName}</span>
-                <div className="flex align-items-center gap-2">
-                    <i className="pi pi-tag text-sm"></i>
-                    {/* <span>{build.itemName}</span> */}
+            <div className="flex flex-wrap p-2 align-items-center gap-3">
+                <div key={build._id} className="flex-1 flex flex-column gap-2 xl:mr-8">
+                    <span className="font-bold">{build.itemName}</span>
+                    <div className="flex align-items-center gap-2">
+                        <i className="pi pi-tag text-sm"></i>
+                        {/* <span>{build.itemName}</span> */}
+                    </div>
+                    {/* <span className="font-bold text-900">${build._id}</span> */}
                 </div>
-                <span className="font-bold text-900">${build._id}</span>
             </div>
-            // </div>
+
         );
     };
 
-    // const Cbuild = () => {
-    //     if (currentBuildData === hostName) {
-    //         console.log(currentBuildData)
-    //     }
-
-    //     let hostItem = hostData.map((item) => 
-
-    //         <div key={item._id}>{item.hostName}</div>
-    //     )
-    //     return (
-    //         <div>{hostItem}</div>
-    //     )
-    // }
-
     const currentBuild = (hostData) => {
         return (
-            <div className="col-8">
+            <div className="col-10">
                 <div className="flex flex-column xl:flex-row xl:align-items-start p-1 gap-1">
                     <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4">
                         <div className="flex flex-column align-items-center sm:align-items-start gap-3">
@@ -606,9 +597,9 @@ function Dashboard() {
                                 </span>
                             </div>
                         </div>
-                        <div className="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">{"h"}
-                            {/* <span className="text-2xl font-semibold">${product.price}</span> */}
-                            {/* <Button icon="pi pi-shopping-cart" className="p-button-rounded" disabled={product.inventoryStatus === 'OUTOFSTOCK'}></Button> */}
+                        <div className="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
+                            {/* <span className="text-2xl font-semibold">{"ONLINE"}</span> */}
+                            <Button icon="pi pi-times" rounded text severity="danger" disabled={currentBuildData.remoteHost !== hostData.hostName} onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" />
                         </div>
                     </div>
                 </div>
@@ -625,7 +616,7 @@ function Dashboard() {
                     <h1>CICD-Dashboard</h1>
                     <div className="card xl:flex xl:justify-content-center">
                         <div>
-                            <OrderList value={cicdBuildQueue} onChange={(e) => setCicdBuildQueue(e.value)} itemTemplate={buildQueue} header="Products" filter filterBy="itemName"></OrderList>
+                            <OrderList value={cicdBuildQueue} onChange={(e) => setCicdBuildQueue(e.value)} itemTemplate={buildQueue} header="Build Queue" filter filterBy="itemName"></OrderList>
                             <DataView value={hostData} itemTemplate={currentBuild} />
                             {/* <Cbuild /> */}
                         </div>

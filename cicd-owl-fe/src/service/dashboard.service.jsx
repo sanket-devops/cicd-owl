@@ -45,7 +45,7 @@ async function _getBuildQueue() {
   await fetch(API_ENDPOINT + '/cicds/build-queue').then(res => res.json()).then((res) => {
     data = res.items;
   });
-  return data
+  return data.reverse()
 }
 // Get Current Build Item
 async function _getCurrentBuild() {
@@ -57,6 +57,21 @@ async function _getCurrentBuild() {
     return data
   } catch (error) {
   }
+}
+
+// Stop and Remove Current Build Item
+async function _currentBuildStop(data) {
+  // console.log("Save Data: " + JSON.stringify(data));
+  fetch(API_ENDPOINT + '/cicds/cancel-current-build-item', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": data
+    })
+  })
 }
 
 // Get All CICD Items
@@ -210,5 +225,5 @@ async function _deleteHost(data) {
   })
 }
 
-export { userLogin, _getAllCicd, _getBuildQueue, _getCurrentBuild, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost };
+export { userLogin, _getAllCicd, _getBuildQueue, _getCurrentBuild, _currentBuildStop, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost };
 
