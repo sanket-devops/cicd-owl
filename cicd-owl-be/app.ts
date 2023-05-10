@@ -30,7 +30,6 @@ let currentbuildItem: any = {
   buildNumber: 0,
   command: "",
 };
-let currentbuildStop: boolean = false;
 const db =
   "mongodb://service-owl:ecivreS8002lwO@192.168.10.108:27017/cicd-owl?authSource=admin";
 mongoose.set("strictQuery", true);
@@ -445,7 +444,7 @@ async function ssh() {
         } else {
           if (index === cicdStages.length - 1) connEnd = true;
           currentbuildItem.command = sshCommand;
-          output = await sshConnect(await host, sshCommand, connEnd, id);
+          output = await sshConnect(await host, sshCommand, connEnd);
           let resDataPromiseArr: any = [];
           resDataPromiseArr.push(
             new Promise(async (resolve: any, reject: any) => {
@@ -457,10 +456,17 @@ async function ssh() {
               if (output.code === 0) {
                 _stageLogs.status = "success";
                 _cicdStageOutput.status = "success";
-              } else {
+              } else if (output.code > 0) {
                 _stageLogs.status = "failed";
                 _cicdStageOutput.status = "failed";
                 cicd.status = "failed";
+              } else {
+                _stageLogs.status = "stopped";
+                _cicdStageOutput.status = "stopped";
+                cicd.status = "stopped";
+                // _stageLogs.logs.push(
+                //   `\nConnection End: Build Stopped By User => (code: ${await output.code})`
+                // );
               }
               _stageLogs.endTime = Date.now();
               _cicdStageOutput.cicdStageOutput.push(_stageLogs);
@@ -531,11 +537,12 @@ async function ssh() {
   };
 }
 
-async function sshConnect(host: any, command: string, connEnd: boolean, id?: any) {
+let conn: any = undefined;
+async function sshConnect(host: any, command: string, connEnd: boolean) {
   let output: any = [];
   const chunks: any = [];
   let outputCode: number = -1;
-  let conn = new Client();
+  conn = new Client();
   let resDataPromiseArr: any = [];
   resDataPromiseArr.push(
     new Promise(async (resolve: any, reject: any) => {
@@ -548,39 +555,80 @@ async function sshConnect(host: any, command: string, connEnd: boolean, id?: any
             stream
               .on("close", async (code: any, signal: any) => {
                 outputCode = await code;
-                resolve();
                 if (connEnd) {
-                  console.log(
-                    "Connection End: All Commands Are Successfully RUN => (code: " +
-                      (await code) +
-                      ", signal: " +
-                      (await signal) +
-                      ")"
-                  );
-                  conn.end();
-                } else if ((await code) >= 0) {
-                  console.log(
-                    "Connection End: Last Command Failed => (code: " +
-                      (await code) +
-                      ", signal: " +
-                      (await signal) +
-                      ")"
-                  );
-                  conn.end();
+                  if ((await code) === 0) {
+                    console.log(
+                      "Connection End: Last Command Success => (code: " +
+                        (await code) +
+                        ", signal: " +
+                        (await signal) +
+                        ")"
+                    );
+                    conn.end();
+                  } else if ((await code) > 0) {
+                    output.push(
+                      `\nConnection End: Last Command Failed => (code: ${await code}, signal: ${await signal})`
+                    );
+                    console.log(
+                      "Connection End: Last Command Failed => (code: " +
+                        (await code) +
+                        ", signal: " +
+                        (await signal) +
+                        ")"
+                    );
+                    conn.end();
+                  } else {
+                    output.push(
+                      `\nConnection End: Build Stopped By User => (code: ${await code}, signal: ${await signal})`
+                    );
+                    console.log(
+                      "Connection End: Build Stopped By User => (code: " +
+                        (await code) +
+                        ", signal: " +
+                        (await signal) +
+                        ")"
+                    );
+                    conn.end();
+                  }
+                } else {
+                  if ((await code) === 0) {
+                    console.log(
+                      "Connection End: Last Command Success => (code: " +
+                        (await code) +
+                        ", signal: " +
+                        (await signal) +
+                        ")"
+                    );
+                    conn.end();
+                  } else if ((await code) > 0) {
+                    output.push(
+                      `\nConnection End: Last Command Failed => (code: ${await code}, signal: ${await signal})`
+                    );
+                    console.log(
+                      "Connection End: Last Command Failed => (code: " +
+                        (await code) +
+                        ", signal: " +
+                        (await signal) +
+                        ")"
+                    );
+                    conn.end();
+                  } else {
+                    output.push(
+                      `\nConnection End: Build Stopped By User => (code: ${await code}, signal: ${await signal})`
+                    );
+                    console.log(
+                      "Connection End: Build Stopped By User => (code: " +
+                        (await code) +
+                        ", signal: " +
+                        (await signal) +
+                        ")"
+                    );
+                    conn.end();
+                  }
                 }
-                else {
-                  console.log(
-                    "Connection End: Build Stopped By User => (code: " +
-                      (await code) +
-                      ", signal: " +
-                      (await signal) +
-                      ")"
-                  );
-                  conn.end();
-                }
+                resolve();
               })
               .on("data", (data: any) => {
-                // console.log('STDOUT: ' + data);
                 chunks.push(data);
               });
             stream
@@ -588,7 +636,6 @@ async function sshConnect(host: any, command: string, connEnd: boolean, id?: any
                 output.push(Buffer.concat(chunks).toString());
               })
               .stderr.on("data", async (data: any) => {
-                // console.log('STDERR: ' + data);
                 chunks.push(data);
               });
           });
@@ -603,8 +650,6 @@ async function sshConnect(host: any, command: string, connEnd: boolean, id?: any
   );
   await Promise.all(resDataPromiseArr);
   let resData = { output: await output, code: outputCode };
-  // console.log(await JSON.parse(JSON.stringify("" + resData.output)));
-  // console.log(resData.output);
   return resData;
 }
 
@@ -629,43 +674,10 @@ app.get("/cicds/current-build-item", async (req, res) => {
 });
 
 //GET cancel Current Build Item
-app.post("/cicds/cancel-current-build-item", async (req: any, res) => {
+app.get("/cicds/cancel-current-build-item", async (req: any, res) => {
   try {
-    // let body = JSON.parse(JSON.stringify(req.body.data));
-    // let cicd = await cicdModel.cicdData.findOne({ _id: body._id });
-    // // console.log(body);
-    // cicd.status = "stoped";
-    // for (const build of cicd.cicdStagesOutput) {
-    //   if (body.buildNumber === build.buildNumber) {
-    //     // console.log(build.buildNumber);
-    //     build.status = "stoped";
-    //     for (const stage of build.cicdStageOutput) {
-    //       if (body.stageName === stage.stageName) {
-    //         console.log(stage.stageName);
-    //         stage.status = "stoped";
-    //         currentbuildItem = {
-    //           _id: "",
-    //           itemName: "",
-    //           status: "",
-    //           stageName: "",
-    //           remoteHost: "",
-    //           buildNumber: 0,
-    //           command: "",
-    //         };
-    //       }
-    //     }
-    //   }
-    // }
-
-    // console.log(cicd);
-    currentbuildStop = true;
-    // await cicdModel.cicdData.findOneAndUpdate({ _id: body._id }, cicd, {
-    //   new: true,
-    //   runValidator: true,
-    // });
-    // conn.end();
-    res.send("build Stop");
-    // buildQueue.enqueue(body);
+    conn.end();
+    res.send(currentbuildItem);
   } catch (e: any) {
     console.log(e);
     res.status(500);

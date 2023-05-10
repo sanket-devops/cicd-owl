@@ -485,7 +485,7 @@ function Dashboard() {
             case 'queue':
                 return 'help';
 
-            case 'stoped':
+            case 'stopped':
                 return 'warning';
 
             case 'failed':
@@ -563,8 +563,7 @@ function Dashboard() {
     };
 
     const cancelCurrentBuild = () => {
-        _currentBuildStop(currentBuildData)
-        // console.log(currentBuildData);
+        _currentBuildStop()
     }
 
     const buildQueue = (build) => {
