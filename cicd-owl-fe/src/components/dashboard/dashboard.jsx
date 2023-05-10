@@ -592,13 +592,15 @@ function Dashboard() {
                             {/* <Rating value={product.rating} readOnly cancel={false}></Rating> */}
                             <div className="flex align-items-center gap-3">
                                 <span className="flex align-items-center gap-2">
-                                    {currentBuildData.remoteHost === hostData.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '2rem' }}></i>{currentBuildData.itemName}</> : "Idle"}
+                                    {currentBuildData.remoteHost === hostData.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>{currentBuildData.itemName}</> : "Idle"}
                                 </span>
                             </div>
                         </div>
-                        <div className="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
-                            {/* <span className="text-2xl font-semibold">{"ONLINE"}</span> */}
-                            <Button icon="pi pi-times" rounded text severity="danger" disabled={currentBuildData.remoteHost !== hostData.hostName} onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" />
+                        <div className="flex sm:flex-column align-items-center sm:align-items-end gap-1 sm:gap-1">
+                            {/* <div className="text-2xl font-bold text-900">
+                                <i className="pi pi-circle-fill" style={{ color: 'green', fontSize: '0.8rem' }}></i>
+                            </div> */}
+                            {currentBuildData.remoteHost === hostData.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" /></> : ""}
                         </div>
                     </div>
                 </div>
