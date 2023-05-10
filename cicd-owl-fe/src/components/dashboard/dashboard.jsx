@@ -14,7 +14,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Tag } from 'primereact/tag';
-import { _getAllCicd, _getBuildQueue, _getCurrentBuild, _currentBuildStop, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
+import { _getAllCicd, _getBuildQueue, _getCurrentBuild, _currentBuildStop, _removeBuildFromQueue, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost } from '../../service/dashboard.service';
 import useWebSocket from 'react-use-websocket';
 
 
@@ -235,12 +235,9 @@ function Dashboard() {
     };
 
     const runCicd = async (rowData) => {
-        // console.log(rowData)
         let body = rowData
         _runCicd(body);
-        setTimeout(async () => {
-            await loadData();
-        }, 3000);
+        loadData();
     };
 
     const runStage = async (rowData) => {
@@ -562,21 +559,30 @@ function Dashboard() {
         setSelectedHost(val)
     };
 
-    const cancelCurrentBuild = () => {
-        _currentBuildStop()
+    const cancelCurrentBuild = async() => {
+       await _currentBuildStop()
+        loadData();
+    }
+
+    const removeBuildFromQueue = async (rowData) => {
+        console.log(rowData)
+        await _removeBuildFromQueue(rowData);
+        loadData();
+
     }
 
     const buildQueue = (build) => {
         return (
-            <div className="flex flex-wrap p-2 align-items-center gap-3">
-                <div key={build._id} className="flex-1 flex flex-column gap-2 xl:mr-8">
+            <div className="flex flex-wrap p-0 align-items-center gap-0">
+                <div key={build._id} className="flex-1 flex flex-column gap-1 xl:mr-4">
                     <span className="font-bold">{build.itemName}</span>
                     <div className="flex align-items-center gap-2">
-                        <i className="pi pi-tag text-sm"></i>
+                        {/* <i className="pi pi-tag text-sm"></i> */}
                         {/* <span>{build.itemName}</span> */}
                     </div>
                     {/* <span className="font-bold text-900">${build._id}</span> */}
                 </div>
+                <Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => removeBuildFromQueue(build)} aria-label="Cancel" />
             </div>
 
         );

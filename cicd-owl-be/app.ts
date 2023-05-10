@@ -686,6 +686,29 @@ app.get("/cicds/cancel-current-build-item", async (req: any, res) => {
 });
 
 // POST Connect SSH
+app.post("/cicds/remove-build-from-queue", async (req: any, res) => {
+  try {
+    let body = JSON.parse(JSON.stringify(req.body.data));
+    if (!buildQueue.isEmpty()) {
+      for (let id = 0; id < buildQueue.items.length; id++) {
+        if (body._id === buildQueue.items[id]._id) {
+            console.log(buildQueue.items.splice(id, 1));
+          res.send(buildQueue);
+        } else {
+          res.send("No Item Found In Queue To Remove...");
+        }
+      }
+    } else {
+      res.send("No Item In Queue To Remove...");
+    }
+  } catch (e: any) {
+    console.log(e);
+    res.status(500);
+    res.send({ message: e.message });
+  }
+});
+
+// POST Connect SSH
 app.post("/connect/ssh", async (req: any, res) => {
   try {
     let body = JSON.parse(JSON.stringify(req.body.data));

@@ -71,6 +71,21 @@ async function _currentBuildStop() {
   }
 }
 
+// Remove Build Item From Build Queue
+async function _removeBuildFromQueue(data) {
+  // console.log("Save Data: " + JSON.stringify(data));
+  fetch(API_ENDPOINT + '/cicds/remove-build-from-queue', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": data
+    })
+  })
+}
+
 // Get All CICD Items
 async function _getAllCicd() {
   let data = undefined;
@@ -222,5 +237,5 @@ async function _deleteHost(data) {
   })
 }
 
-export { userLogin, _getAllCicd, _getBuildQueue, _getCurrentBuild, _currentBuildStop, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost };
+export { userLogin, _getAllCicd, _getBuildQueue, _getCurrentBuild, _removeBuildFromQueue, _currentBuildStop, _cicdStagesOutputById, validateToken, _saveCicd, _updateCicd, _deleteCicd, _runCicd, _runStage, _getAllHost, _saveHost, _updateHost, _deleteHost };
 
