@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import WebSocket, { CLOSING, WebSocketServer } from "ws";
 import { setInterval } from "timers";
 import Queue from "./services/Queue";
-
+import cron from "node-cron";
 var Stream = require("stream");
 const { Client } = require("ssh2");
 const fastify = Fastify();
@@ -66,6 +66,84 @@ app.listen({ port: port, host: hostname }, function () {
 //     console.log(`WS Client ${clientIp} is Disconnected...`);
 //   });
 // })
+
+const jobs = new Map([
+  [
+    "job1",
+    { schedule: "*/10 * * * * *", task: () => console.log("Running task 1") },
+  ]
+]);
+
+async function initCronJob() {
+  let cronJobCicds = await cicdModel.cicdData
+    .find({})
+    .select("itemName status cronJob cicdStages");
+  for (let index = 0; index < cronJobCicds.length; index++) {
+    if (cronJobCicds[index].cronJob) {
+      // console.log(cronJobCicds[index]);
+      let cicdNameVar: string = cronJobCicds[index].itemName;
+      let cicdObj = cronJobCicds[index];
+      jobs.set(cronJobCicds[index].itemName, {
+        schedule: cronJobCicds[index].cronJob,
+        task: () => buildQueue.enqueue(cronJobCicds[index]),
+      });
+      // console.log(jobs);
+    }
+  }
+  jobs.forEach((value, key) => {
+    cron.schedule(
+      value.schedule,
+      () => {
+        value.task();
+      },
+      {
+        scheduled: true,
+        name: key
+      }
+    );
+  });
+}
+initCronJob();
+
+
+// console.log(jobs.get("job1"));
+
+
+// let job1 = cron.schedule(
+//   data.schedule,
+//   () => {
+//     data.task();
+//   },
+//   {
+//     scheduled: false,
+//   }
+// );
+// job1.start();
+
+interface Jobname {
+  jobName: string;
+}
+
+const cicdName: Jobname = {
+  jobName: 'job1'
+}
+
+// Stop a job by name
+const stopJob: any = (name: any) => {
+  const scheduledTask: any = jobs.get(name);
+  if (scheduledTask) {
+    scheduledTask.stop();
+    jobs.delete(name);
+    console.log(`Stopped job ${name}`);
+  } else {
+    console.log(`Job ${name} not found`);
+  }
+};
+
+// Stop job1 after 30 seconds
+setTimeout(() => {
+  stopJob('job1');
+}, 30000);
 
 app.get("/", (req, res) => {
   res.send(`CICD-OWL Is Running...`);
@@ -692,7 +770,7 @@ app.post("/cicds/remove-build-from-queue", async (req: any, res) => {
     if (!buildQueue.isEmpty()) {
       for (let id = 0; id < buildQueue.items.length; id++) {
         if (body._id === buildQueue.items[id]._id) {
-            console.log(buildQueue.items.splice(id, 1));
+          console.log(buildQueue.items.splice(id, 1));
           res.send(buildQueue);
         } else {
           res.send("No Item Found In Queue To Remove...");

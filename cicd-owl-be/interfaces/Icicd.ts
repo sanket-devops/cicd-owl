@@ -3,6 +3,7 @@ import { ICore } from "./Icore";
 export interface Icicd extends ICore {
   itemName: string,
   status: string,
+  cronJob: string,
   cicdStages: IcicdStages[],
   cicdStagesOutput: IcicdStagesOutput[]
 }

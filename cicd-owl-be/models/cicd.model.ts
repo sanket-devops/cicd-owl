@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 const CicdSchema = new Schema({
     itemName: String,
     status: String,
+    cronJob: String,
     cicdStages: [{stageName: String, remoteHost: String, command: String}],
     cicdStagesOutput: [{buildNumber: Number, startTime: String, endTime: String, status: String, cicdStageOutput: [{stageName: String, startTime: String, endTime: String, status: String, code: Number, logs:[]}]}]
 }, {

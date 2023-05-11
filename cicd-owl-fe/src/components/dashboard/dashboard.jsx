@@ -51,6 +51,7 @@ function Dashboard() {
     let emptyCicd = {
         "itemName": "",
         "status": "",
+        "cronJob": "",
         "cicdStages": [],
         "cicdStagesOutput": []
     };
@@ -559,8 +560,8 @@ function Dashboard() {
         setSelectedHost(val)
     };
 
-    const cancelCurrentBuild = async() => {
-       await _currentBuildStop()
+    const cancelCurrentBuild = async () => {
+        await _currentBuildStop()
         loadData();
     }
 
@@ -648,6 +649,12 @@ function Dashboard() {
                         </label>
                         <InputText id="name" value={cicd.itemName} onChange={(e) => onInputCicdNameChange(e, 'itemName')} required autoFocus className={classNames({ 'p-invalid': submitted && !cicd.itemName })} />
                         {submitted && !cicd.itemName && <small className="p-error">Cicd Name is required.</small>}
+                        <label htmlFor="cron" className="font-bold">
+                            Schedule Job
+                        </label>
+                        <InputText id="cron" value={cicd.cronJob} onChange={(e) => onInputCicdNameChange(e, 'cronJob')} required autoFocus />
+                        {/* {submitted && !cicd.itemName && <small className="p-error">Cicd Name is required.</small>} */}
+
                         <div className="card">
                             <Toolbar className="mb-4" left={leftToolbarStageTemplate}></Toolbar>
 
