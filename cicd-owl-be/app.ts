@@ -2,7 +2,7 @@ import { Iuser } from "./interfaces/Iuser";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import mongoose from "mongoose";
-import WebSocket, { CLOSING, WebSocketServer } from "ws";
+// import WebSocket, { CLOSING, WebSocketServer } from "ws";
 import { setInterval } from "timers";
 import Queue from "./services/Queue";
 import schedule from "node-schedule";
@@ -81,7 +81,6 @@ async function initCronJob() {
       });
     } else if (cronJobCicds[index].cronJob === "") {
       let jobName = cronJobCicds[index].itemName;
-      console.log(schedule.scheduledJobs);
       jobs.delete(jobName);
     }
   }

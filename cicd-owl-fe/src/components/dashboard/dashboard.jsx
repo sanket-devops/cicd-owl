@@ -705,27 +705,21 @@ function Dashboard() {
                     </div>
                 </Dialog>
 
-                <Dialog visible={hostDialog} style={{ width: '64rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="cicd Details" modal className="p-fluid" footer={hostDialogFooter} onHide={hideDialog}>
-                    {/* {cicd.image && <img src={`https://primefaces.org/cdn/primereact/images/cicd/${cicd.image}`} alt={cicd.image} className="cicd-image block m-auto pb-3" />} */}
-                    <div className="field">
-                    </div>
-                </Dialog>
-
-                <Dialog visible={deleteCicdDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdDialogFooter} onHide={hideDeleteCicdDialog}>
+                <Dialog visible={deleteCicdDialog} style={{ width: '50rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdDialogFooter} onHide={hideDeleteCicdDialog}>
                     <div className="confirmation-content">
                         <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                         {cicd && (<span>Are you sure you want to delete cicd <b>{cicd.itemName}</b> ?</span>)}
                     </div>
                 </Dialog>
 
-                <Dialog visible={deleteCicdStageDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdStageDialogFooter} onHide={hideDeleteCicStagedDialog}>
+                <Dialog visible={deleteCicdStageDialog} style={{ width: '50rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteCicdStageDialogFooter} onHide={hideDeleteCicStagedDialog}>
                     <div className="confirmation-content">
                         <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                         {stage && <span>Are you sure you want to delete the selected stage <b>{stage.stageName}</b> ?</span>}
                     </div>
                 </Dialog>
 
-                <Dialog visible={deleteHostDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteHostDialogFooter} onHide={hideDeleteHostDialog}>
+                <Dialog visible={deleteHostDialog} style={{ width: '50rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deleteHostDialogFooter} onHide={hideDeleteHostDialog}>
                     <div className="confirmation-content">
                         <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                         {host && <span>Are you sure you want to delete the selected host <b>{host.hostName}</b> ?</span>}
