@@ -135,6 +135,7 @@ async function _updateCicd(data) {
     body: JSON.stringify({
       "_id": data._id,
       "itemName": data.itemName,
+      "cronJob": data.cronJob,
       "cicdStages": data.cicdStages
     })
   })

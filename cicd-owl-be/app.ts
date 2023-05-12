@@ -5,7 +5,8 @@ import mongoose from "mongoose";
 import WebSocket, { CLOSING, WebSocketServer } from "ws";
 import { setInterval } from "timers";
 import Queue from "./services/Queue";
-import cron from "node-cron";
+import schedule from "node-schedule";
+const cron = require("node-cron");
 var Stream = require("stream");
 const { Client } = require("ssh2");
 const fastify = Fastify();
@@ -67,83 +68,36 @@ app.listen({ port: port, host: hostname }, function () {
 //   });
 // })
 
-const jobs = new Map([
-  [
-    "job1",
-    { schedule: "*/10 * * * * *", task: () => console.log("Running task 1") },
-  ]
-]);
-
+const jobs = new Map([]);
 async function initCronJob() {
   let cronJobCicds = await cicdModel.cicdData
     .find({})
     .select("itemName status cronJob cicdStages");
   for (let index = 0; index < cronJobCicds.length; index++) {
-    if (cronJobCicds[index].cronJob) {
-      // console.log(cronJobCicds[index]);
-      let cicdNameVar: string = cronJobCicds[index].itemName;
-      let cicdObj = cronJobCicds[index];
+    if (cron.validate(cronJobCicds[index].cronJob)) {
       jobs.set(cronJobCicds[index].itemName, {
         schedule: cronJobCicds[index].cronJob,
         task: () => buildQueue.enqueue(cronJobCicds[index]),
       });
-      // console.log(jobs);
+    } else if (cronJobCicds[index].cronJob === "") {
+      let jobName = cronJobCicds[index].itemName;
+      console.log(schedule.scheduledJobs);
+      jobs.delete(jobName);
     }
   }
-  jobs.forEach((value, key) => {
-    cron.schedule(
-      value.schedule,
-      () => {
-        value.task();
-      },
-      {
-        scheduled: true,
-        name: key
-      }
-    );
+  jobs.forEach((value: any, key: any) => {
+    schedule.scheduleJob(key, value.schedule, () => {
+      value.task();
+    });
   });
 }
 initCronJob();
 
-
-// console.log(jobs.get("job1"));
-
-
-// let job1 = cron.schedule(
-//   data.schedule,
-//   () => {
-//     data.task();
-//   },
-//   {
-//     scheduled: false,
-//   }
-// );
-// job1.start();
-
-interface Jobname {
-  jobName: string;
+async function restartScheduler() {
+  await schedule.gracefulShutdown();
+  await initCronJob();
+  return schedule.scheduledJobs;
 }
-
-const cicdName: Jobname = {
-  jobName: 'job1'
-}
-
-// Stop a job by name
-const stopJob: any = (name: any) => {
-  const scheduledTask: any = jobs.get(name);
-  if (scheduledTask) {
-    scheduledTask.stop();
-    jobs.delete(name);
-    console.log(`Stopped job ${name}`);
-  } else {
-    console.log(`Job ${name} not found`);
-  }
-};
-
-// Stop job1 after 30 seconds
-setTimeout(() => {
-  stopJob('job1');
-}, 30000);
 
 app.get("/", (req, res) => {
   res.send(`CICD-OWL Is Running...`);
@@ -200,7 +154,7 @@ app.get("/cicds", async (req, res) => {
     // let hosts = await owlModel.serviceHost.find({}).select('ipAddress hostName port hostMetrics.DiskFree hostMetrics.MemFree hostMetrics.CpuUsage linkTo userName userPass groupName clusterName envName vmName note status hostCheck metricsCheck createdAt updatedAt').sort({_id:-1});
     let cicds = await cicdModel.cicdData
       .find({})
-      .select("itemName status cicdStages createdAt updatedAt")
+      .select("itemName status cronJob cicdStages createdAt updatedAt")
       .sort({ _id: -1 });
     // res.send({data: getEncryptedData(hosts)});
     res.send({ data: cicds });
@@ -224,13 +178,14 @@ app.post("/cicds/cicd-stages", async (req: any, res) => {
   }
 });
 
-//POST Cicd Item
+//POST Cicd Item save
 app.post("/cicds/cicd-save", async (req: any, res) => {
   try {
     // let tempData = JSON.parse(getDecryptedData(req.body.data));
     // console.log(req.body.data)
     let tempData = JSON.parse(JSON.stringify(req.body.data));
     let saved = await cicdModel.cicdData.create(tempData);
+    await restartScheduler();
     res.send(saved);
   } catch (e: any) {
     console.log(e);
@@ -239,7 +194,7 @@ app.post("/cicds/cicd-save", async (req: any, res) => {
   }
 });
 
-//UPDATE Cicd Item
+//UPDATE Cicd Item update
 app.put("/cicds/update", async (req: any, res) => {
   try {
     // let tempData = JSON.parse(getDecryptedData(req.body.data));
@@ -249,11 +204,34 @@ app.put("/cicds/update", async (req: any, res) => {
     let post = await cicdModel.cicdData.findOneAndUpdate(
       { _id: tempData._id },
       {
-        $set: { itemName: tempData.itemName, cicdStages: tempData.cicdStages },
+        $set: {
+          itemName: tempData.itemName,
+          cronJob: tempData.cronJob,
+          cicdStages: tempData.cicdStages,
+        },
       },
       { new: true, runValidator: true }
     );
     res.send(post);
+    let doUpdate = async () => {
+      if (buildRunning) {
+        setTimeout(doUpdate, 1000);
+      } else {
+        await cicdModel.cicdData.findOneAndUpdate(
+          { _id: tempData._id },
+          {
+            $set: {
+              itemName: tempData.itemName,
+              cronJob: tempData.cronJob,
+              cicdStages: tempData.cicdStages,
+            },
+          },
+          { new: true, runValidator: true }
+        );
+      }
+    };
+    doUpdate();
+    await restartScheduler();
   } catch (e) {
     res.status(500);
   }
@@ -266,6 +244,7 @@ app.post("/cicds/cicd-delete", async (req: any, res) => {
     let post = await cicdModel.cicdData.findByIdAndRemove({
       _id: JSON.parse(JSON.stringify(req.body.data)),
     });
+    await restartScheduler();
     res.send(post);
   } catch (e) {
     res.status(500);
@@ -444,17 +423,17 @@ app.post("/hosts/host-delete", async (req: any, res) => {
 
 /////////////////////////////////////////////////////////////////////
 
-setInterval(() => {
+setInterval(async () => {
   if (buildQueue.size() && !buildRunning) {
-    ssh();
+    await ssh();
   }
 }, 1000);
 
 async function ssh() {
+  buildRunning = true;
   try {
     let buildItem = buildQueue.front();
     buildQueue.dequeue();
-    buildRunning = true;
     // console.log("Build Started: => \n", buildData);
     let cicdStages = buildItem.cicdStages;
     let id = buildItem._id;
@@ -598,12 +577,10 @@ async function ssh() {
       new: true,
       runValidator: true,
     });
-    buildRunning = false;
     // return await cicd;
   } catch (error) {
     console.log(error);
   }
-
   currentbuildItem = {
     _id: "",
     itemName: "",
@@ -613,6 +590,7 @@ async function ssh() {
     buildNumber: 0,
     command: "",
   };
+  buildRunning = false;
 }
 
 let conn: any = undefined;

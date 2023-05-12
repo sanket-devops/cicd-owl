@@ -635,6 +635,7 @@ function Dashboard() {
                             <Column selectionMode="single" exportable={false}></Column>
                             <Column field="itemName" header="Name" sortable style={{ minWidth: '16rem' }}></Column>
                             <Column field="status" header="Status" body={statusBodyTemplate} sortable style={{ minWidth: '5rem' }}></Column>
+                            <Column field="cronJob" header="Schedule" sortable style={{ minWidth: '6rem' }}></Column>
                             <Column field={updated} header="Updated" sortable></Column>
                             <Column field={created} header="Created" sortable></Column>
                             <Column header="Action" body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
