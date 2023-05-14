@@ -1,15 +1,26 @@
-FROM python:3-alpine
+### STAGE 1: Build ###
+FROM node:18.14.0-alpine
 
-LABEL maintainer='sanket.devops@gmail.com'
-LABEL version='0.0.0-dev.0-build.0'
+COPY . /app/
+# COPY package*.json /app/
 
-RUN apk add --update nodejs npm
+# Start build backend
+WORKDIR /app/cicd-owl-be
 
-ADD . /code/
-WORKDIR /code/cicd-owl-be
+# Install app dependencies
+RUN npm set progress=false && npm cache clear --force && npm install
 
-RUN pip install -r requirements.txt --no-cache-dir
+# Start build backend
+WORKDIR /app/cicd-owl-fe
 
-EXPOSE 5000/tcp
+# # Install app dependencies
+RUN npm set progress=false && npm cache clear --force && npm install
 
-CMD ["sh", "/code/cicd-owl-be/start-main-flask.sh"]
+# Exposing port
+EXPOSE 8888 3000
+
+# Start app
+ENTRYPOINT cd /app && sh start.sh
+
+
+# docker rm -f cicd && docker run --name cicd -p 8888:8888 -p 3000:3000 cicd

@@ -15,7 +15,7 @@ fastify.register(cors, {
 });
 const hostname = "0.0.0.0";
 const port = 8888;
-const WebSocketPort = 8800;
+// const WebSocketPort = 8800;
 const app = fastify;
 const userModel = require("./models/user.model");
 const hostModel = require("./models/host.model");

@@ -411,6 +411,7 @@ function Dashboard() {
 
     let LogoutClick = async () => {
         localStorage.removeItem('token');
+        clearInterval(reloadData.interval);
         navigate("/login");
     }
 
