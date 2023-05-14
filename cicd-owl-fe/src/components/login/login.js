@@ -29,13 +29,13 @@ function Login() {
         }
     }, []);
 
-    let Greeting = () => {
-        if (isLoggedIn) {
-            return <h1>Welcome {user}</h1>;
-        } else {
-            return <h1>Please login...</h1>;
-        }
-    }
+    // let Greeting = () => {
+    //     if (isLoggedIn) {
+    //         return <h1>Welcome {user}</h1>;
+    //     } else {
+    //         return <h1>Please login...</h1>;
+    //     }
+    // }
     let userChange = (e) => {
         setUser(e.target.value)
     }
@@ -64,25 +64,32 @@ function Login() {
     }
     return (
         <>
-            <>{Greeting()}</>
+            {/* <>{Greeting()}</> */}
             <Toast ref={toast} />
-            <div className="card flex justify-content-center">
-                <div className="flex flex-column gap-2">
-                    <label htmlFor="username">Username</label>
-                    <InputText id="username" value={user} onChange={(e) => userChange(e)} aria-describedby="username-help" />
-                    <small id="username-help">
-                        Enter your username.
-                    </small>
-                    <br />
-                    <label htmlFor="password">Password</label>
-                    <InputText id="password" value={pass} onChange={(e) => passChange(e)} aria-describedby="password-help" />
-                    <small id="password-help">
-                        Enter your password.
-                    </small>
-                    <br />
-                    <Button label="Submit" type="submit" onClick={() => LoginClick()} icon="pi pi-check" />
+            <div class="wrapper fadeInDown">
+                <div id="formContent">
+                    {/* <!-- Icon --> */}
+                    <div class="fadeIn first pl-5 pt-3 pr-5 pb-2">
+                        <div class="p-3 mb-3">
+                            <img src="assets/img/owl.svg" id="icon" alt="Logo" />
+                            <img src="assets/img/infinity.svg" id="icon" alt="Logo" />
+                        </div>
+                        <h1 class="m-0 text-center">CICD OWL</h1>
+                    </div>
+                    <div className="card flex justify-content-center">
+                        <div className="flex flex-column">
+                            <InputText id="username" placeholder="Username" value={user} onChange={(e) => userChange(e)} aria-describedby="username-help" />
+                            <br />
+                            <InputText id="password"placeholder="Username" value={pass} onChange={(e) => passChange(e)} aria-describedby="password-help" />
+                            <br />
+                            <Button label="LOG IN" type="submit" onClick={() => LoginClick()} icon="pi pi-key" />
+                        </div>
+                    </div>
                 </div>
+
             </div>
+
+
         </>
     )
 }
