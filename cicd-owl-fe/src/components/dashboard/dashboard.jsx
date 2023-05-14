@@ -39,7 +39,8 @@ function Dashboard() {
         "hostPort": 22,
         "hostUser": "",
         "hostPass": "",
-        "hostPath": ""
+        "hostPath": "",
+        "executors": ""
     }
 
     let emptyStage = {
@@ -354,7 +355,7 @@ function Dashboard() {
             setTimeout(() => {
                 loadHost();
             }, 250);
-            setHostDialog(false);
+            // setHostDialog(false);
         }
     }
     // const findIndexById = (id) => {
@@ -384,7 +385,6 @@ function Dashboard() {
     const hostDialogFooter = (
         <React.Fragment>
             <Button label="Cancel" icon="pi pi-times" outlined onClick={hideHostDialog} />
-            <Button label="Save" icon="pi pi-check" onClick={saveHost} />
         </React.Fragment>
     );
 
@@ -741,43 +741,51 @@ function Dashboard() {
                                 </label> */}
                             </div>
                             <div className="card">
-                                <div id="stage" className="flex flex-wrap gap-3 mb-4">
+                                <div id="stage" className="flex flex-wrap gap-4 mb-4">
                                     <div className="flex-auto">
                                         <span className="p-float-label">
-                                            <InputText id="stageName" value={host.hostAdd} onChange={(e) => hostChange(e, 'hostAdd')} className="w-full" />
+                                            <InputText id="hostadd" value={host.hostAdd} onChange={(e) => hostChange(e, 'hostAdd')} className="w-full" />
                                             {submitted && !host.hostAdd && <small className="p-error">Host Address is required.</small>}
-                                            <label htmlFor="Stage Name">Host Address</label>
+                                            <label htmlFor="Name">Host Address</label>
                                         </span>
                                     </div>
                                     <div className="flex-auto">
                                         <span className="p-float-label">
-                                            <InputText id="stageName" value={host.hostPort} onChange={(e) => hostChange(e, 'hostPort')} className="w-full" />
+                                            <InputText id="hostport" value={host.hostPort} onChange={(e) => hostChange(e, 'hostPort')} className="w-full" />
                                             {submitted && !host.hostPort && <small className="p-error">Host Port is required.</small>}
-                                            <label htmlFor="Stage Name">Host Port</label>
+                                            <label htmlFor="Name">Host Port</label>
                                         </span>
                                     </div>
                                     <div className="flex-auto">
                                         <span className="p-float-label">
-                                            <InputText id="stageName" value={host.hostUser} onChange={(e) => hostChange(e, 'hostUser')} className="w-full" />
+                                            <InputText id="hostuser" value={host.hostUser} onChange={(e) => hostChange(e, 'hostUser')} className="w-full" />
                                             {submitted && !host.hostUser && <small className="p-error">Host Username is required.</small>}
-                                            <label htmlFor="Stage Name">Username</label>
+                                            <label htmlFor="Name">Username</label>
                                         </span>
                                     </div>
                                     <div className="flex-auto">
                                         <span className="p-float-label">
-                                            <InputText id="stageName" value={host.hostPass} onChange={(e) => hostChange(e, 'hostPass')} className="w-full" />
+                                            <InputText id="hostpass" value={host.hostPass} onChange={(e) => hostChange(e, 'hostPass')} className="w-full" />
                                             {submitted && !host.hostPass && <small className="p-error">Host Password is required.</small>}
-                                            <label htmlFor="Stage Name">Password</label>
+                                            <label htmlFor="Name">Password</label>
                                         </span>
                                     </div>
                                     <div className="flex-auto">
                                         <span className="p-float-label">
-                                            <InputText id="stageName" value={host.hostPath} onChange={(e) => hostChange(e, 'hostPath')} className="w-full" />
+                                            <InputText id="hostpass" value={host.executors} onChange={(e) => hostChange(e, 'executors')} className="w-full" />
+                                            {submitted && !host.executors && <small className="p-error">Executors is required.</small>}
+                                            <label htmlFor="Name">Executors</label>
+                                        </span>
+                                    </div>
+                                    <div className="flex-auto">
+                                        <span className="p-float-label">
+                                            <InputText id="hostpath" value={host.hostPath} onChange={(e) => hostChange(e, 'hostPath')} className="w-full" />
                                             {submitted && !host.hostPath && <small className="p-error">Host Path is required.</small>}
-                                            <label htmlFor="Stage Name">Host Path</label>
+                                            <label htmlFor="Name">Host Path</label>
                                         </span>
                                     </div>
                                 </div>
+                                <Button label="Save" icon="pi pi-check" onClick={saveHost} />
                             </div>
                         </div>
                         {/* <Toolbar className="mb-4" left={leftToolbarStageTemplate}>Added Hosts</Toolbar> */}
@@ -789,6 +797,7 @@ function Dashboard() {
                             <Column field="hostName" header="Host Name" sortable style={{ minWidth: '15rem' }}></Column>
                             <Column field="hostAdd" header="Host Address" sortable style={{ minWidth: '11rem' }}></Column>
                             <Column field="hostPort" header="Port" sortable style={{ minWidth: '2rem' }}></Column>
+                            <Column field="executors" header="Exe" sortable style={{ minWidth: '1rem' }}></Column>
                             <Column field="hostPath" header="Host Path" sortable style={{ minWidth: '15rem' }}></Column>
                             <Column field={updated} header="Updated" sortable style={{ minWidth: '11rem' }}></Column>
                             <Column field={created} header="Created" sortable style={{ minWidth: '11rem' }}></Column>

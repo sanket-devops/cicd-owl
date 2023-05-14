@@ -7,4 +7,5 @@ export interface Ihost extends ICore {
   hostUser: string;
   hostPass: string;
   hostPath: string;
+  executors: number;
 }

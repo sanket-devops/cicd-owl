@@ -9,6 +9,7 @@ const HostSchema = new Schema({
     hostUser: String,
     hostPass: String,
     hostPath: String,
+    executors: Number,
 }, {
     // http://mongoosejs.com/docs/guide.html#timestamps
     timestamps: true
