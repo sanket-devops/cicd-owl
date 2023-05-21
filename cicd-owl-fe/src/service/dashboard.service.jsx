@@ -54,6 +54,7 @@ async function _getCurrentBuild() {
     await fetch(API_ENDPOINT + '/cicds/current-build-item').then(res => res.json()).then((res) => {
       data = res;
     });
+    // console.log(data);
     return data
   } catch (error) {
   }

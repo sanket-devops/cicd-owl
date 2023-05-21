@@ -590,6 +590,28 @@ function Dashboard() {
         );
     };
 
+
+    let currentBuildDataArr = (buildData, hostData) => {
+        // console.log(buildData);
+        return (
+            <>
+                {/* <h1>{hostData.hostName}</h1> */}
+                {buildData.map(function (build, index) {
+                    // if (build.remoteHost) {
+                    return (
+                        <span key={index} className="flex align-items-center gap-2">
+                            {build.remoteHost === hostData.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>{build.itemName}</> : ""}
+                            {build.remoteHost === hostData.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" /></> : ""}
+                        </span>
+                    )
+                    // }
+                })}
+
+            </>
+        )
+    }
+
+
     const currentBuild = (hostData) => {
         return (
             <div className="col-10">
@@ -597,18 +619,9 @@ function Dashboard() {
                     <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4">
                         <div className="flex flex-column align-items-center sm:align-items-start gap-3">
                             <div className="text-2xl font-bold text-900">{hostData.hostName}</div>
-                            {/* <Rating value={product.rating} readOnly cancel={false}></Rating> */}
-                            <div className="flex align-items-center gap-3">
-                                <span className="flex align-items-center gap-2">
-                                    {currentBuildData.remoteHost === hostData.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>{currentBuildData.itemName}</> : "Idle"}
-                                </span>
+                            <div className="flex flex-column xl:flex-row align-items-center">
+                                {currentBuildDataArr(currentBuildData, hostData)}
                             </div>
-                        </div>
-                        <div className="flex sm:flex-column align-items-center sm:align-items-end gap-1 sm:gap-1">
-                            {/* <div className="text-2xl font-bold text-900">
-                                <i className="pi pi-circle-fill" style={{ color: 'green', fontSize: '0.8rem' }}></i>
-                            </div> */}
-                            {currentBuildData.remoteHost === hostData.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" /></> : ""}
                         </div>
                     </div>
                 </div>
