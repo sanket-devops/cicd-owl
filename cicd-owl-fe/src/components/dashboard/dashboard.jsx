@@ -590,27 +590,20 @@ function Dashboard() {
         );
     };
 
-
     let currentBuildDataArr = (buildData, hostData) => {
-        // console.log(buildData);
         return (
             <>
-                {/* <h1>{hostData.hostName}</h1> */}
                 {buildData.map(function (build, index) {
-                    // if (build.remoteHost) {
                     return (
                         <span key={index} className="flex align-items-center gap-2">
                             {build.remoteHost === hostData.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>{build.itemName}</> : ""}
                             {build.remoteHost === hostData.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" /></> : ""}
                         </span>
                     )
-                    // }
                 })}
-
             </>
         )
     }
-
 
     const currentBuild = (hostData) => {
         return (
