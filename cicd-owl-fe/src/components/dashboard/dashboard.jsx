@@ -83,7 +83,9 @@ function Dashboard() {
 
     let loadData = async () => {
         setCicdData(await _getAllCicd());
+        setCicdBuildQueue([]);
         setCicdBuildQueue(await _getBuildQueue());
+        setCurrentBuildData([]);
         setCurrentBuildData(await _getCurrentBuild());
     };
     let loadHost = async () => {
@@ -101,7 +103,11 @@ function Dashboard() {
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
                     reloadData.interval = setInterval(async () => { await loadData() }, 10000);
                 }
-                else if (res.status === 401) {
+                // else if (res.status === 401) {
+                //     clearInterval(reloadData.interval);
+                //     navigate("/login");
+                // }
+                else {
                     clearInterval(reloadData.interval);
                     navigate("/login");
                 }
@@ -574,20 +580,22 @@ function Dashboard() {
     }
 
     const buildQueue = (build) => {
-        return (
-            <div className="flex flex-wrap p-0 align-items-center gap-0">
-                <div key={build._id} className="flex-1 flex flex-column gap-1 xl:mr-4">
-                    <span className="font-bold">{build.itemName}</span>
-                    <div className="flex align-items-center gap-2">
-                        {/* <i className="pi pi-tag text-sm"></i> */}
-                        {/* <span>{build.itemName}</span> */}
+        if (buildQueue.length) {
+            return (
+                <div className="flex flex-wrap p-0 align-items-center gap-0">
+                    <div key={build._id} className="flex-1 flex flex-column gap-1 xl:mr-4">
+                        <span className="font-bold">{build.itemName}</span>
+                        <div className="flex align-items-center gap-2">
+                            {/* <i className="pi pi-tag text-sm"></i> */}
+                            {/* <span>{build.itemName}</span> */}
+                        </div>
+                        {/* <span className="font-bold text-900">${build._id}</span> */}
                     </div>
-                    {/* <span className="font-bold text-900">${build._id}</span> */}
+                    <Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => removeBuildFromQueue(build)} aria-label="Cancel" />
                 </div>
-                <Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => removeBuildFromQueue(build)} aria-label="Cancel" />
-            </div>
 
-        );
+            );
+        }
     };
 
     let currentBuildDataArr = (buildData, hostData) => {

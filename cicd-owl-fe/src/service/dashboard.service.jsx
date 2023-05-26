@@ -24,19 +24,22 @@ async function userLogin(user, pass) {
 async function validateToken(token) {
   let data = undefined;
   if (token) {
-    data = await fetch(API_ENDPOINT + '/users/login/token', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        "data": token
+    try {
+      data = await fetch(API_ENDPOINT + '/users/login/token', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          "data": token
+        })
       })
-    })
+      return data
+    } catch (error) {
+      return error
+    }
   }
-  // console.log(data)
-  return data
 }
 
 // Get Build Queue Items

@@ -102,13 +102,14 @@ export default function Cicd(props) {
     const listItem = (cicdStagesData) => {
         return (
             <div className="col-12">
+                <br />{cicdStagesData.startTime.toLocaleString()}
                 {/* <ProgressBar value={cicdProgress}></ProgressBar> */}
                 {/* {cicdProgressBar(cicdStagesData.endTime, cicdStagesData.startTime)} */}
-                <div className="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
+                <div className="flex flex-column xl:flex-row xl:align-items-start p-5 gap-2">
                     <div key={cicdStagesData._id} className="flex align-items-center gap-2">
                         {cicdStagesData.buildNumber}
                         {cicdStagesData.cicdStageOutput.map((stageObj) => (
-                            <div key={stageObj._id} className="p-2 border-1 surface-border surface-card border-round">
+                            <div key={stageObj._id} className="p-1 border-1 surface-border surface-card border-round">
                                 {stageObj.stageName}
                                 <Button icon="pi" className="p-5 flex align-items-center" severity={getSeverity(stageObj.status)} onClick={(e) => showStageLogs(stageObj.logs)} >
                                     {stageTime(stageObj.endTime, stageObj.startTime)}
