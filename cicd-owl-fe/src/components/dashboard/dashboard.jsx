@@ -8,7 +8,7 @@ import { Toolbar } from 'primereact/toolbar';
 import { Column } from 'primereact/column';
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from 'primereact/inputtextarea';
-import { OrderList } from 'primereact/orderlist';
+import { Card } from 'primereact/card';
 import { Dropdown } from 'primereact/dropdown';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
@@ -83,9 +83,9 @@ function Dashboard() {
 
     let loadData = async () => {
         setCicdData(await _getAllCicd());
-        setCicdBuildQueue([]);
+        // setCicdBuildQueue([]);
         setCicdBuildQueue(await _getBuildQueue());
-        setCurrentBuildData([]);
+        // setCurrentBuildData([]);
         setCurrentBuildData(await _getCurrentBuild());
     };
     let loadHost = async () => {
@@ -101,7 +101,7 @@ function Dashboard() {
                     loadData();
                     loadHost();
                     toast.current.show({ severity: 'success', summary: 'Success', detail: 'Login Success' });
-                    reloadData.interval = setInterval(async () => { await loadData() }, 10000);
+                    reloadData.interval = setInterval(async () => { await loadData(); await loadHost(); }, 10000);
                 }
                 // else if (res.status === 401) {
                 //     clearInterval(reloadData.interval);
@@ -579,33 +579,37 @@ function Dashboard() {
 
     }
 
-    const buildQueue = (build) => {
-        if (buildQueue.length) {
-            return (
-                <div className="flex flex-wrap p-0 align-items-center gap-0">
-                    <div key={build._id} className="flex-1 flex flex-column gap-1 xl:mr-4">
-                        <span className="font-bold">{build.itemName}</span>
-                        <div className="flex align-items-center gap-2">
-                            {/* <i className="pi pi-tag text-sm"></i> */}
-                            {/* <span>{build.itemName}</span> */}
+    const buildQueue = () => {
+        if (cicdBuildQueue.length) {
+            return (<>
+                {cicdBuildQueue.map(function (build, index) {
+                    return (
+                        <div key={index} className="flex flex-wrap p-0 align-items-center gap-0">
+                            <div className="flex-1 flex flex-column gap-1 xl:mr-4">
+                                <span className="font-bold">{build.itemName}</span>
+                                <div className="flex align-items-center gap-2">
+                                    {/* <i className="pi pi-tag text-sm"></i> */}
+                                    {/* <span>{build.itemName}</span> */}
+                                </div>
+                                {/* <span className="font-bold text-900">${build._id}</span> */}
+                            </div>
+                            <Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => removeBuildFromQueue(build)} aria-label="Cancel" />
                         </div>
-                        {/* <span className="font-bold text-900">${build._id}</span> */}
-                    </div>
-                    <Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => removeBuildFromQueue(build)} aria-label="Cancel" />
-                </div>
-
+                    )
+                })}
+            </>
             );
         }
     };
 
-    let currentBuildDataArr = (buildData, hostData) => {
+    let currentBuildDataArr = (buildData, host) => {
         return (
             <>
                 {buildData.map(function (build, index) {
                     return (
                         <span key={index} className="flex align-items-center gap-2">
-                            {build.remoteHost === hostData.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>{build.itemName}</> : ""}
-                            {build.remoteHost === hostData.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" /></> : ""}
+                            {build.remoteHost === host.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>{build.itemName}</> : ""}
+                            {build.remoteHost === host.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild()} aria-label="Cancel" /></> : ""}
                         </span>
                     )
                 })}
@@ -613,15 +617,17 @@ function Dashboard() {
         )
     }
 
-    const currentBuild = (hostData) => {
+    const currentBuild = (host) => {
         return (
             <div className="col-10">
                 <div className="flex flex-column xl:flex-row xl:align-items-start p-1 gap-1">
                     <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4">
                         <div className="flex flex-column align-items-center sm:align-items-start gap-3">
-                            <div className="text-2xl font-bold text-900">{hostData.hostName}</div>
-                            <div className="flex flex-column xl:flex-row align-items-center">
-                                {currentBuildDataArr(currentBuildData, hostData)}
+                            <div className="text-2xl font-bold text-900">{host.hostName}&nbsp;&nbsp;
+                                <Tag severity="info" icon="pi pi-server" value={host.executors}></Tag>
+                            </div>
+                            <div className="flex flex-column align-items-center">
+                                {currentBuildDataArr(currentBuildData, host)}
                             </div>
                         </div>
                     </div>
@@ -637,12 +643,16 @@ function Dashboard() {
                 <div className="card">
                     <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
                     <h1>CICD-Dashboard</h1>
-                    <div className="card xl:flex xl:justify-content-center">
-                        <div>
-                            <OrderList value={cicdBuildQueue} onChange={(e) => setCicdBuildQueue(e.value)} itemTemplate={buildQueue} header="Build Queue" filter filterBy="itemName"></OrderList>
-                            <DataView value={hostData} itemTemplate={currentBuild} />
-                            {/* <Cbuild /> */}
+                    <div className="card xl:flex gap-2">
+                        <div className="flex flex-column gap-2">
+                            <Card title="Build Queue" className="md:w-28rem">
+                                {buildQueue()}
+                            </Card>
+                            <Card title="Hosts" className="md:w-28rem">
+                                <DataView value={hostData} itemTemplate={currentBuild} />
+                            </Card>
                         </div>
+
                         <DataTable value={cicdData} selection={selectedItems} onSelectionChange={(e) => openCicd(e.value) && setSelectedItems(e.value)}
                             dataKey="_id" paginator rows={20} rowsPerPageOptions={[25, 50, 100]}
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"

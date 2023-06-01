@@ -440,10 +440,11 @@ setInterval(async () => {
       });
 
       if (host.executors > 0) {
+        stage.cicdId = buildItem._id;
         hostReadyCounter++;
         await hostModel.hostData.findOneAndUpdate(
           { _id: host._id },
-          { $inc: { executors: -1 } }
+          { $push: {buildItems: stage}, $inc: { executors: -1 } }
         );
       } else {
         await hostModel.hostData.findOneAndUpdate(
@@ -605,7 +606,7 @@ async function ssh() {
       });
       await hostModel.hostData.findOneAndUpdate(
         { _id: host._id },
-        { $inc: { executors: +1 } }
+        { $pull: {buildItems: {_id: cicdStages[index]._id}}, $inc: { executors: +1 } }
       );
       buildRunning = false;
     }
@@ -812,6 +813,7 @@ app.post("/connect/ssh", async (req: any, res) => {
       new: true,
       runValidator: true,
     });
+    body.key = buildQueue.size() + 1;
     buildQueue.enqueue(body);
     res.send(buildQueue);
   } catch (e: any) {

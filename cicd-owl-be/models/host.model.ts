@@ -10,6 +10,7 @@ const HostSchema = new Schema({
     hostPass: String,
     hostPath: String,
     executors: Number,
+    buildItems: [{cicdId: String, stageName: String, remoteHost: String, command: String}]
 }, {
     // http://mongoosejs.com/docs/guide.html#timestamps
     timestamps: true

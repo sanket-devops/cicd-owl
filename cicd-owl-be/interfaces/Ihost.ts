@@ -8,4 +8,12 @@ export interface Ihost extends ICore {
   hostPass: string;
   hostPath: string;
   executors: number;
+  buildItems: IcicdStages[];
+}
+
+export interface IcicdStages {
+  cicdId: string;
+  stageName: string;
+  remoteHost: string;
+  command: string;
 }
