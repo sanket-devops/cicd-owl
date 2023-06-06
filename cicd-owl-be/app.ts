@@ -8,7 +8,9 @@ import Queue from "./services/Queue";
 import schedule from "node-schedule";
 const cron = require("node-cron");
 var Stream = require("stream");
-const { Client } = require("ssh2");
+// const { Client } = require("ssh2");
+const ssh2 = require("ssh2");
+const connections: any = [];
 const fastify = Fastify();
 fastify.register(cors, {
   // put your options here
@@ -444,7 +446,7 @@ setInterval(async () => {
         hostReadyCounter++;
         await hostModel.hostData.findOneAndUpdate(
           { _id: host._id },
-          { $push: {buildItems: stage}, $inc: { executors: -1 } }
+          { $push: { buildItems: stage }, $inc: { executors: -1 } }
         );
       } else {
         await hostModel.hostData.findOneAndUpdate(
@@ -456,14 +458,14 @@ setInterval(async () => {
     }
     if (buildItem.cicdStages.length === hostReadyCounter) {
       console.log("Host ready to Run SSH");
-      await ssh();
+      await startBuild();
     } else {
       console.log("Host not ready to Run SSH");
     }
   }
 }, 10000);
 
-async function ssh() {
+async function startBuild() {
   try {
     let buildItem = buildQueue.front();
     buildQueue.dequeue();
@@ -550,7 +552,13 @@ async function ssh() {
         if (index === cicdStages.length - 1) connEnd = true;
         currentbuildItem.command = sshCommand;
         currentbuildItems.push(currentbuildItem);
-        output = await sshConnect(await host, sshCommand, connEnd);
+        let connectionName = `${buildNumber}-${buildItem.itemName}`;
+        output = await sshConnect(
+          await host,
+          sshCommand,
+          connEnd,
+          connectionName
+        );
         currentbuildItems.pop();
         let resDataPromiseArr: any = [];
         resDataPromiseArr.push(
@@ -606,7 +614,10 @@ async function ssh() {
       });
       await hostModel.hostData.findOneAndUpdate(
         { _id: host._id },
-        { $pull: {buildItems: {_id: cicdStages[index]._id}}, $inc: { executors: +1 } }
+        {
+          $pull: { buildItems: { _id: cicdStages[index]._id } },
+          $inc: { executors: +1 },
+        }
       );
       buildRunning = false;
     }
@@ -634,11 +645,18 @@ async function ssh() {
 }
 
 // let conn: any = undefined;
-async function sshConnect(host: any, command: string, connEnd: boolean) {
+async function sshConnect(
+  host: any,
+  command: string,
+  connEnd: boolean,
+  connectionName?: string
+) {
   let output: any = [];
   const chunks: any = [];
   let outputCode: number = -1;
-  let conn = new Client();
+  let conn = new ssh2.Client();
+  conn.connName = connectionName;
+  connections.push(conn);
   let resDataPromiseArr: any = [];
   resDataPromiseArr.push(
     new Promise(async (resolve: any, reject: any) => {
@@ -650,6 +668,11 @@ async function sshConnect(host: any, command: string, connEnd: boolean) {
             if (err) throw err;
             stream
               .on("close", async (code: any, signal: any) => {
+                for (let idx = 0; idx < connections.length; idx++) {
+                  if (connections[idx].connName === connectionName) {
+                    connections.splice(idx, 1);
+                  }
+                }
                 outputCode = await code;
                 if (connEnd) {
                   if ((await code) === 0) {
@@ -770,10 +793,27 @@ app.get("/cicds/current-build-item", async (req, res) => {
 });
 
 //GET cancel Current Build Item
-app.get("/cicds/cancel-current-build-item", async (req: any, res) => {
+app.post("/cicds/cancel-current-build-item", async (req: any, res) => {
   try {
-    conn.end();
-    res.send(currentbuildItem);
+    let body = JSON.parse(JSON.stringify(req.body.data));
+    let connectionName = `${body.buildNumber}-${body.itemName}`;
+    for (const connection of connections) {
+      if (connection.connName === connectionName) {
+        let cicd = await cicdModel.cicdData.findOne({ _id: body._id });
+        let host = await hostModel.hostData.findOne({
+          hostName: body.remoteHost,
+        });
+        await hostModel.hostData.findOneAndUpdate(
+          { _id: host._id },
+          {
+            $pull: { buildItems: { cicdId: body._id } },
+            $inc: { executors: (await cicd.cicdStages.length) - 1 },
+          }
+        );
+        connection.end();
+      }
+    }
+    res.send(`Build Removed => ${connectionName}`);
   } catch (e: any) {
     console.log(e);
     res.status(500);
@@ -788,7 +828,7 @@ app.post("/cicds/remove-build-from-queue", async (req: any, res) => {
     if (!buildQueue.isEmpty()) {
       for (let id = 0; id < buildQueue.items.length; id++) {
         if (body._id === buildQueue.items[id]._id) {
-          console.log(buildQueue.items.splice(id, 1));
+          buildQueue.items.splice(id, 1)
           res.send(buildQueue);
         } else {
           res.send("No Item Found In Queue To Remove...");

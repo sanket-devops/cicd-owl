@@ -64,20 +64,21 @@ async function _getCurrentBuild() {
 }
 
 // Stop and Remove Current Build Item
-async function _currentBuildStop() {
-  let data = undefined;
-  try {
-    await fetch(API_ENDPOINT + '/cicds/cancel-current-build-item').then(res => res.json()).then((res) => {
-      data = res;
-    });
-    return data
-  } catch (error) {
-  }
+async function _currentBuildStop(data) {
+  return fetch(API_ENDPOINT + '/cicds/cancel-current-build-item', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      "data": data
+    })
+  })
 }
 
 // Remove Build Item From Build Queue
 async function _removeBuildFromQueue(data) {
-  // console.log("Save Data: " + JSON.stringify(data));
   fetch(API_ENDPOINT + '/cicds/remove-build-from-queue', {
     method: 'POST',
     headers: {
