@@ -9,6 +9,7 @@ export interface Ihost extends ICore {
   hostPath: string;
   executors: number;
   buildItems: IcicdStages[];
+  currentBuilds: IcurrentBuild[];
 }
 
 export interface IcicdStages {
@@ -16,4 +17,12 @@ export interface IcicdStages {
   stageName: string;
   remoteHost: string;
   command: string;
+}
+
+export interface IcurrentBuild {
+  cicdId: string;
+  stageName: string;
+  remoteHost: string;
+  command: string;
+  cicdName: string;
 }

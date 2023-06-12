@@ -601,39 +601,32 @@ function Dashboard() {
         }
     };
 
-    let currentBuildDataArr = (buildData, host) => {
-        return (
-            <>
-                {buildData.map(function (build, index) {
+    const currentBuild = () => {
+        if (hostData.length) {
+            return (<>
+                {hostData.map(function (host, index) {
                     return (
-                        <span key={index} className="flex align-items-center gap-2">
-                            {build.remoteHost === host.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i>{build.itemName}</> : ""}
-                            {build.remoteHost === host.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild(build)} aria-label="Cancel" /></> : ""}
-                        </span>
-                    )
-                })}
-            </>
-        )
-    }
-
-    const currentBuild = (host) => {
-        return (
-            <div className="col-10">
-                <div className="flex flex-column xl:flex-row xl:align-items-start p-1 gap-1">
-                    <div className="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4">
-                        <div className="flex flex-column align-items-center sm:align-items-start gap-3">
+                        <div key={index} className="flex flex-column align-items-center sm:align-items-start gap-3">
                             <div className="text-2xl font-bold text-900">{host.hostName}&nbsp;&nbsp;
                                 <Tag severity="info" icon="pi pi-server" value={host.executors}></Tag>
                             </div>
                             <div className="flex flex-column align-items-center">
-                                {currentBuildDataArr(currentBuildData, host)}
+                                {host.currentBuilds.map(function (build, index) {
+                                    return (
+                                        <span key={index} className="flex align-items-center gap-2">
+                                            {build.remoteHost === host.hostName ? <><i className="pi pi-spin pi-spinner" style={{ fontSize: '1rem' }}></i><span style={{ fontWeight: 'bold' }}>{build.cicdName}</span>{" > "}{build.stageName}</> : ""}
+                                            {build.remoteHost === host.hostName ? <><Button icon="pi pi-times" rounded text severity="danger" onClick={(e) => cancelCurrentBuild(build)} aria-label="Cancel" /></> : ""}
+                                        </span>
+                                    )
+                                })}
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
+                    )
+                })}
+            </>
+            );
+        }
+    };
 
     return (
         <>
@@ -648,7 +641,7 @@ function Dashboard() {
                                 {buildQueue()}
                             </Card>
                             <Card title="Hosts" className="md:w-28rem">
-                                <DataView value={hostData} itemTemplate={currentBuild} />
+                                {currentBuild()}
                             </Card>
                         </div>
 

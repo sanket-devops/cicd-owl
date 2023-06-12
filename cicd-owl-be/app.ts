@@ -551,7 +551,13 @@ async function startBuild() {
       } else {
         if (index === cicdStages.length - 1) connEnd = true;
         currentbuildItem.command = sshCommand;
-        currentbuildItems.push(currentbuildItem);
+        // currentbuildItems.push(currentbuildItem);
+        let addCicdName = cicdStages[index]
+        addCicdName.cicdName = buildItem.itemName;
+        await hostModel.hostData.findOneAndUpdate(
+          { _id: host._id },
+          { $push: { currentBuilds: addCicdName } }
+        );
         let connectionName = `${buildNumber}-${buildItem.itemName}`;
         output = await sshConnect(
           await host,
@@ -559,7 +565,13 @@ async function startBuild() {
           connEnd,
           connectionName
         );
-        currentbuildItems.pop();
+        // currentbuildItems.pop();
+        await hostModel.hostData.findOneAndUpdate(
+          { _id: host._id },
+          {
+            $pull: { currentBuilds: { _id: cicdStages[index]._id } },
+          }
+        );
         let resDataPromiseArr: any = [];
         resDataPromiseArr.push(
           new Promise(async (resolve: any, reject: any) => {
@@ -828,7 +840,7 @@ app.post("/cicds/remove-build-from-queue", async (req: any, res) => {
     if (!buildQueue.isEmpty()) {
       for (let id = 0; id < buildQueue.items.length; id++) {
         if (body._id === buildQueue.items[id]._id) {
-          buildQueue.items.splice(id, 1)
+          buildQueue.items.splice(id, 1);
           res.send(buildQueue);
         } else {
           res.send("No Item Found In Queue To Remove...");
